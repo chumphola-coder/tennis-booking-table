@@ -2,7 +2,6 @@
 <html lang="th">
 <head>
     <meta charset="UTF-8">
-    <!-- อนุญาตให้ซูมเข้าออกบนมือถือและ PWA -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
     <title>Makmai Tennis Club - Booking System (Online)</title>
     <meta name="description" content="ระบบจองคอร์ตเทนนิสหมู่บ้านแมกไม้ (Online Cloud Version)">
@@ -51,9 +50,12 @@
         .slot-paid { background-color: #dbeafe; color: #1e40af; }
         .slot-past { background-color: #f1f5f9; color: #94a3b8; cursor: not-allowed; }
         .slot-played { background-color: #FFFBEB; color: #92400E; border: 1px solid #FCD34D; }
-        .slot-overpaid { background-color: #fae8ff; color: #7e22ce; border: 1px solid #d8b4fe; }
-        .slot-underpaid { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; }
         
+        /* Loader Animation */
+        .loader { border: 2px solid #f3f3f3; border-radius: 50%; width: 16px; height: 16px; animation: spin 1s linear infinite; }
+        .loader.border-blue-500 { border-top: 2px solid #3b82f6; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         /* Highlight Animation */
         .slot-highlight { animation: pulse-ring 2s infinite; }
         @keyframes pulse-ring {
@@ -79,9 +81,9 @@
 <body class="p-2 sm:p-4 md:p-8">
 
     <!-- Notification -->
-    <div id="customAlert" class="bg-slate-800 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 w-[90%] md:w-auto max-w-sm">
+    <div id="customAlert" class="bg-slate-800 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 w-[90%] md:w-auto max-w-sm z-[9999]">
         <svg class="w-6 h-6 text-yellow-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span id="alertMessage" class="font-bold text-sm md:text-base whitespace-pre-line"></span>
+        <span id="alertMessage" class="font-bold text-sm md:text-base"></span>
     </div>
 
     <!-- Hidden Input for Updating Slip / Restore -->
@@ -108,14 +110,13 @@
                 </div>
             </div>
 
-            <!-- Center: Logo (Hidden for Guest to save space on mobile) -->
+            <!-- Center: Logo -->
             <div id="logoContainer" class="flex-shrink-0 my-2 md:my-0 hidden md:block">
-                <div class="h-16 md:h-24 w-16 md:w-24 bg-slate-800 flex items-center justify-center rounded-lg shadow-sm text-3xl">🎾</div>
+                <img src="แมกไม้พื้นหลังดำ.jpg" class="h-16 md:h-24 w-auto object-contain rounded-lg shadow-sm" alt="Makmai Logo" onerror="this.style.display='none'">
             </div>
 
             <!-- Right Side: Action Button -->
             <div class="flex flex-1 justify-center md:justify-end gap-2 flex-wrap items-center w-full">
-                <!-- Group of Admin/User Buttons (Hidden when Guest) -->
                 <div id="mainActionButtons" class="flex gap-2 flex-wrap hidden justify-center md:justify-end w-full md:w-auto">
                     <button onclick="window.openExportModal()" class="px-4 py-2 bg-green-600 text-white rounded-xl text-sm font-bold hover:bg-green-700 flex items-center gap-2 transition-all shadow-lg shadow-green-200">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"></path></svg>
@@ -138,7 +139,6 @@
                         🔒 ปลดล็อกผู้ดูแล
                     </button>
                 </div>
-                <!-- Login Button (Visible to all) -->
                 <button id="loginBtn" onclick="window.toggleLogin()" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 transition-all flex items-center gap-2 shadow-lg mt-2 md:mt-0 w-full md:w-auto justify-center">
                     🔐 เข้าสู่ระบบ (สำหรับจอง)
                 </button>
@@ -146,7 +146,7 @@
         </header>
 
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-            <!-- Left: Booking Form (Hidden by default for Guest) -->
+            <!-- Left: Booking Form -->
             <div id="leftColumn" class="lg:col-span-4 no-print hidden">
                 <div class="glass-panel p-4 md:p-5 border border-slate-200 sticky top-4 w-full" id="bookingPanel">
                     
@@ -218,6 +218,11 @@
                                     <span id="slipFileName" class="truncate">อัพโหลดสลิปจ่ายเงิน</span>
                                 </label>
                             </div>
+                            <!-- AI Status Box -->
+                            <div id="aiStatusBox" class="hidden mt-2 p-3 rounded-xl flex items-center gap-3 border text-xs transition-all">
+                                <div id="aiSpinner" class="loader border-blue-500"></div>
+                                <span id="aiStatusText" class="font-bold"></span>
+                            </div>
                         </div>
 
                         <div class="px-3 md:px-4 py-2 md:py-2.5 bg-slate-50 rounded-xl flex justify-between items-center border-2 border-dashed border-blue-100">
@@ -232,10 +237,10 @@
                 </div>
             </div>
 
-            <!-- Right: Content (Starts full width when Guest) -->
+            <!-- Right: Content -->
             <div id="rightColumn" class="lg:col-span-12 space-y-4 md:space-y-6 w-full">
                 
-                <!-- 1. Booking List (ON TOP) -->
+                <!-- 1. Booking List -->
                 <div class="glass-panel border border-slate-200 overflow-hidden no-print w-full">
                     <div class="p-3 md:p-4 bg-white border-b flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4">
                         <h3 class="font-bold text-slate-800 text-sm md:text-base">รายการจองรายสัปดาห์</h3>
@@ -268,7 +273,7 @@
                     </div>
                 </div>
 
-                <!-- 2. Visual Schedule (ON BOTTOM) -->
+                <!-- 2. Visual Schedule -->
                 <div class="glass-panel p-3 md:p-5 border border-slate-200 w-full overflow-hidden">
                     <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 md:gap-4 mb-4">
                         <div class="flex items-center gap-2 md:gap-3 w-full md:w-auto justify-between">
@@ -280,10 +285,9 @@
                         </div>
                         <div class="flex gap-2 md:gap-4 text-[9px] md:text-[10px] font-bold uppercase tracking-wider flex-wrap">
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 md:w-3 md:h-3 rounded bg-emerald-400"></span> ว่าง</span>
-                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 md:w-3 md:h-3 rounded bg-orange-400"></span> ค้างชำระ</span>
-                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 md:w-3 md:h-3 rounded bg-red-200 border border-red-300"></span> ยอดไม่ครบ</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 md:w-3 md:h-3 rounded bg-orange-400"></span> จองแต่ค้างชำระ</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 md:w-3 md:h-3 rounded bg-blue-500"></span> จ่ายแล้ว</span>
-                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 md:w-3 md:h-3 rounded bg-purple-200 border border-purple-300"></span> ชำระเกิน</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 md:w-3 md:h-3 rounded bg-red-400 border border-red-500"></span> ยอดสลิปไม่ตรง</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 md:w-3 md:h-3 rounded" style="background-color: #FFFBEB; border: 1px solid #FCD34D;"></span> เล่นแล้ว</span>
                             <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 md:w-3 md:h-3 rounded bg-slate-200"></span> หมดเวลา</span>
                         </div>
@@ -333,7 +337,22 @@
         </div>
     </div>
 
-    <!-- Prompt Modal (Custom for iframe compatibility) -->
+    <!-- Confirmation Modal for Deletion -->
+    <div id="confirmModal" class="fixed inset-0 bg-slate-900/80 z-[100] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center mx-2">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-2">ยืนยันการลบ?</h3>
+            <p class="text-slate-500 text-sm mb-6">คุณแน่ใจว่าต้องการลบรายการจองนี้? ข้อมูลจะไม่สามารถกู้คืนได้</p>
+            <div class="flex gap-3">
+                <button onclick="window.closeConfirmModal()" class="flex-1 px-4 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors">ยกเลิก</button>
+                <button id="confirmDeleteBtn" class="flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg shadow-red-200">ลบข้อมูล</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt Modal -->
     <div id="promptModal" class="fixed inset-0 bg-slate-900/80 z-[110] hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center mx-2">
             <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -504,12 +523,7 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, doc, setDoc, deleteDoc, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-        // =========================================================================
-        // 🔒 การตั้งค่าระบบ AI สแกนสลิป (Gemini Only) 🔒
-        // =========================================================================
-        const GEMINI_API_KEY = "AIzaSyCFibyy8DsXh2Pm-o__e1JMgJTQQVNhFfY"; 
-        // =========================================================================
+        import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-functions.js";
 
         const config = {
             apiKey: "AIzaSyA4ACuJR2m49qx-I56bkO-VIiyMHbnXXSM",
@@ -537,61 +551,11 @@
         window.myRevChart = null; 
         window.myUsgChart = null; 
         window.pendingMaintenance = null;
+        window.currentSlipStatus = 'pending'; // เก็บสถานะสลิปล่าสุด
         
-        let db, auth, app, collectionRef;
+        let db, auth, app, collectionRef, functionsClient;
         const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
         const originalDocTitle = document.title;
-
-        // --- OCR AI SCAN FUNCTION (Gemini Only) ---
-        async function scanSlipAmountWithAI(base64String) {
-            try {
-                // Ensure base64 format without data prefix
-                const base64Data = base64String.includes(',') ? base64String.split(',')[1] : base64String;
-
-                const prompt = `You are an expert OCR system for Thai bank transfer slips.
-Extract the final transfer amount. Look specifically for the number associated with the keyword "บาท" (Baht) or total amount.
-Ignore account numbers, reference numbers, dates, or available balances.
-Respond strictly in JSON format with a single key "amount" containing the numerical value.
-Example: {"amount": 1500.50}
-If you absolutely cannot find the amount, return {"amount": 0}`;
-                
-                const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${GEMINI_API_KEY}`;
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 15000); // ให้เวลา AI ฝั่ง Frontend 15 วินาที
-                
-                const response = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ role: "user", parts: [{ text: prompt }, { inlineData: { mimeType: "image/jpeg", data: base64Data } }] }],
-                        generationConfig: { temperature: 0, responseMimeType: "application/json" }
-                    }),
-                    signal: controller.signal
-                });
-                clearTimeout(timeoutId);
-
-                if (response.ok) {
-                    const result = await response.json();
-                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
-                    if (text) {
-                        try {
-                            const parsed = JSON.parse(text);
-                            return Number(parsed.amount) || 0;
-                        } catch(e) {
-                            const match = text.replace(/,/g, '').match(/[0-9]+(\.[0-9]+)?/);
-                            if (match) return parseFloat(match[0]);
-                        }
-                    }
-                    return 0;
-                } else {
-                    console.error("Gemini API Error:", response.status, await response.text());
-                    return -1; // API มีปัญหา ให้เด้งถามผู้ใช้
-                }
-            } catch (err) {
-                console.warn("Gemini Network/Timeout Error:", err.message);
-                return -1; // Network error / Timeout ให้เด้งถามผู้ใช้
-            }
-        }
 
         // --- CUSTOM MODALS FOR IFRAME COMPATIBILITY ---
         window.customPrompt = function(title) {
@@ -630,7 +594,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             });
         };
 
-        window.customConfirm = function(text, title="ยืนยันการดำเนินการ?", type="warning") {
+        window.customConfirm = function(text, title="ยืนยันการดำเนินการ?", isDanger=false) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('confirmModalGeneric');
                 document.getElementById('confirmTitleGeneric').innerText = title;
@@ -638,25 +602,12 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 const btn = document.getElementById('confirmActionBtnGeneric');
                 const icon = document.getElementById('confirmIconGeneric');
                 
-                if (type === "danger") {
+                if (isDanger) {
                     btn.className = "flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg";
                     icon.className = "w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4";
-                    icon.setAttribute('class', 'w-8 h-8');
-                    icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
-                    document.getElementById('confirmTitleGeneric').classList.add('text-red-600');
-                } else if (type === "success") {
-                    btn.className = "flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg";
-                    icon.className = "w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4";
-                    icon.setAttribute('class', 'w-8 h-8');
-                    icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
-                    document.getElementById('confirmTitleGeneric').classList.remove('text-red-600');
-                    document.getElementById('confirmTitleGeneric').classList.add('text-emerald-600');
                 } else {
                     btn.className = "flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg";
                     icon.className = "w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4";
-                    icon.setAttribute('class', 'w-8 h-8');
-                    icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
-                    document.getElementById('confirmTitleGeneric').classList.remove('text-red-600', 'text-emerald-600');
                 }
 
                 modal.classList.add('modal-active');
@@ -682,26 +633,8 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             });
         };
 
-        window.showAlert = (msg, type = 'warning') => { 
+        window.showAlert = (msg) => { 
             const box = document.getElementById('customAlert'); 
-            const icon = box.querySelector('svg');
-            
-            box.className = 'text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 w-[90%] md:w-auto max-w-sm fixed top-4 right-4 md:top-6 md:right-6 z-[9999] transition-all';
-            
-            if (type === 'success') {
-                box.classList.add('bg-emerald-600');
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
-                icon.setAttribute('class', 'w-6 h-6 text-white shrink-0');
-            } else if (type === 'danger' || type === 'error') {
-                box.classList.add('bg-red-600');
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
-                icon.setAttribute('class', 'w-6 h-6 text-white shrink-0');
-            } else {
-                box.classList.add('bg-slate-800');
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
-                icon.setAttribute('class', 'w-6 h-6 text-yellow-400 shrink-0');
-            }
-            
             box.querySelector('span').innerText = msg; 
             box.style.display = 'flex'; 
             setTimeout(() => box.style.display = 'none', 4000); 
@@ -976,9 +909,9 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
 125/256,คุณเฉลิมชัย  พัวพิพัฒน์
 125/257,คุณเรวดี  รังคะรัตน
 125/258,คุณยอดพงศ์  รามสูต
-125/259,คุณศิริพร  วัฒกุล
+125/259,คุณศิริพร  วัฒนกุล
 125/260,คุณศิริพร วัฒนกุล
-125/261,คุณศิริพร  วัฒกุล
+125/261,คุณศิริพร  วัฒนกุล
 125/262,คุณเสริมศักดิ์  ลักษณานันท์
 125/263,คุณจินดา  คละทอง
 125/264,คุณจักรพงศ์  เจริญรักษ์วรกิจ
@@ -1250,12 +1183,80 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             document.getElementById('exportExcelModal').classList.add('modal-active');
         };
 
-        window.updateFileName = (input) => {
+        window.updateFileName = async (input) => {
             const span = document.getElementById('slipFileName');
+            const statusBox = document.getElementById('aiStatusBox');
+            const statusText = document.getElementById('aiStatusText');
+            const spinner = document.getElementById('aiSpinner');
+
             if (input.files && input.files.length > 0) {
                 span.innerText = `อัพโหลดแล้ว (${input.files.length} ไฟล์)`;
                 span.classList.add('text-blue-600', 'font-bold');
+
+                // เริ่มตรวจสอบสลิปด้วย AI ผ่าน Cloud Functions
+                const file = input.files[0];
+                const reader = new FileReader();
+
+                if (statusBox) {
+                    statusBox.classList.remove('hidden');
+                    statusBox.className = "mt-2 p-3 rounded-xl flex items-center gap-3 border text-xs bg-blue-50 border-blue-200 text-blue-700 transition-all";
+                    if(spinner) spinner.classList.remove('hidden');
+                    if(statusText) statusText.innerText = "กำลังส่งรูปให้ Cloud AI ตรวจสอบ...";
+                }
+                window.currentSlipStatus = 'verifying';
+                document.getElementById('submitBtn').disabled = true; // ล็อคปุ่มกันกดก่อนตรวจเสร็จ
+
+                reader.onload = async (e) => {
+                    const base64Data = e.target.result.split(',')[1];
+                    const expectedTotal = window.calculateTotal();
+
+                    try {
+                        if (!functionsClient) throw new Error("ระบบ Functions ยังไม่พร้อม");
+                        const verifySlipCall = httpsCallable(functionsClient, 'verifySlip');
+                        
+                        const result = await verifySlipCall({ 
+                            imageBase64: base64Data, 
+                            expectedAmount: expectedTotal 
+                        });
+
+                        const data = result.data;
+                        window.currentSlipStatus = data.status;
+                        if(spinner) spinner.classList.add('hidden');
+
+                        if (data.status === 'verified') {
+                            if(statusBox) {
+                                statusBox.className = "mt-2 p-3 rounded-xl flex items-center gap-3 border text-xs bg-emerald-50 border-emerald-200 text-emerald-700";
+                                statusText.innerText = `✅ ตรวจสอบผ่าน! ยอดเงิน ฿${data.extractedAmount}`;
+                            }
+                        } else if (data.status === 'mismatch') {
+                            if(statusBox) {
+                                statusBox.className = "mt-2 p-3 rounded-xl flex items-center gap-3 border text-xs bg-red-50 border-red-200 text-red-700 font-bold shadow-sm";
+                                statusText.innerText = `⚠️ ยอดเงินไม่ตรง! (ในสลิป ฿${data.extractedAmount} / ต้องจ่าย ฿${data.expectedAmount})`;
+                            }
+                            window.showAlert("⚠️ ยอดเงินในสลิปไม่ตรงกับยอดที่ต้องชำระ");
+                        } else {
+                            if(statusBox) {
+                                statusBox.className = "mt-2 p-3 rounded-xl flex items-center gap-3 border text-xs bg-orange-50 border-orange-200 text-orange-700";
+                                statusText.innerText = `❌ ตรวจสอบไม่ได้: ${data.message} (แอดมินต้องตรวจด้วยมือ)`;
+                            }
+                        }
+                    } catch (error) {
+                        console.error("Verification error:", error);
+                        window.currentSlipStatus = 'error';
+                        if(spinner) spinner.classList.add('hidden');
+                        if(statusBox) {
+                            statusBox.className = "mt-2 p-3 rounded-xl flex items-center gap-3 border text-xs bg-orange-50 border-orange-200 text-orange-700";
+                            statusText.innerText = "❌ เชื่อมต่อระบบ AI ล้มเหลว (กดจองต่อได้เลย)";
+                        }
+                    } finally {
+                        document.getElementById('submitBtn').disabled = false; // ปลดล็อคปุ่ม
+                    }
+                };
+                reader.readAsDataURL(file);
+
             } else {
+                window.currentSlipStatus = 'pending';
+                if(statusBox) statusBox.classList.add('hidden');
                 if (window.isPastBookingMode) span.innerHTML = "อัพโหลดสลิปจ่ายเงิน <span class='text-red-500'>*(บังคับ)</span>";
                 else { span.classList.remove('text-blue-600', 'font-bold'); span.innerText = 'อัพโหลดสลิปจ่ายเงิน'; }
             }
@@ -1371,19 +1372,24 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             window.isPastBookingMode = !window.isPastBookingMode;
             const fp = document.getElementById('dateInput')._flatpickr;
             const title = document.getElementById('formTitle'), btn = document.getElementById('togglePastModeBtn'), slipLabel = document.getElementById('slipFileName');
+            const statusBox = document.getElementById('aiStatusBox');
             const todayStr = window.getThailandDate();
             
             if (window.isPastBookingMode) {
                 title.innerText = "บันทึกย้อนหลัง"; btn.classList.replace("bg-slate-100", "bg-purple-100"); btn.classList.replace("text-slate-600", "text-purple-700");
                 fp.set("minDate", null); fp.set("maxDate", todayStr); fp.set("disable", []);
-                slipLabel.innerHTML = "อัพโหลดสลิปจ่ายเงิน <span class='text-red-500'>*(บังคับ)</span>";
+                if(!document.getElementById('slipInput').files.length) {
+                    slipLabel.innerHTML = "อัพโหลดสลิปจ่ายเงิน <span class='text-red-500'>*(บังคับ)</span>";
+                }
             } else {
                 title.innerText = "จองคอร์ตสนามเทนนิส"; btn.classList.replace("bg-purple-100", "bg-slate-100"); btn.classList.replace("text-purple-700", "text-slate-600");
                 const maxDateObj = new Date(); maxDateObj.setDate(maxDateObj.getDate() + 7);
                 const maxBS = `${maxDateObj.getFullYear()}-${String(maxDateObj.getMonth()+1).padStart(2,'0')}-${String(maxDateObj.getDate()).padStart(2,'0')}`;
                 fp.set("minDate", todayStr); fp.set("maxDate", null);
                 fp.set("disable", [function(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}` > maxBS; }]);
-                slipLabel.innerHTML = "อัพโหลดสลิปจ่ายเงิน";
+                if(!document.getElementById('slipInput').files.length) {
+                    slipLabel.innerHTML = "อัพโหลดสลิปจ่ายเงิน";
+                }
             }
         };
 
@@ -1401,18 +1407,14 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     let exc = (b && String(b.id) === String(window.highlightedBookingId)) ? 'ring-2 ring-offset-1 ring-amber-400 shadow-md scale-105 z-10 relative' : '';
                     if(b) {
                         const fin = (date < today) || (date === today && nowH >= (parseInt(b.time.split(':')[0],10) + Number(b.hours)));
-                        const hasSlip = window.hasSlip(b);
-                        const expectedPrice = Number(b.totalPrice) || 0;
-                        const scannedPrice = b.scannedAmount !== undefined ? Number(b.scannedAmount) : (hasSlip ? expectedPrice : 0);
-                        
                         let cls = 'slot-booked';
-                        if (hasSlip) {
-                            if (fin) cls = 'slot-played';
-                            else if (scannedPrice < expectedPrice) cls = 'slot-underpaid';
-                            else if (scannedPrice > expectedPrice) cls = 'slot-overpaid';
-                            else cls = 'slot-paid';
+                        if (window.hasSlip(b)) {
+                            if (b.slipStatus === 'mismatch' || b.slipStatus === 'invalid') {
+                                cls = 'bg-red-100 text-red-800 border border-red-400 shadow-sm';
+                            } else {
+                                cls = fin ? 'slot-played' : 'slot-paid';
+                            }
                         }
-                        
                         td.innerHTML = `<div class="rounded py-1 md:py-2 text-[10px] md:text-xs font-bold ${cls} ${exc} flex flex-col justify-center items-center leading-tight min-w-0 w-full overflow-hidden"><span class="truncate w-full text-center px-1">${b.customerName}</span><span class="text-[8px] md:text-[10px] font-medium opacity-90 mt-0.5">125/${b.address}</span></div>`;
                     } else if(isP) td.innerHTML = `<div class="rounded py-1 md:py-2 text-[10px] md:text-sm slot-past">✕</div>`;
                     else { td.innerHTML = `<div ${window.isLoggedIn ? `onclick="window.selectSlot('${date}', '${h}:00', '${court}')"` : ''} class="rounded py-1 md:py-2 text-[10px] md:text-sm slot-free ${window.isLoggedIn ? 'cursor-pointer hover:bg-emerald-200' : ''}">ว่าง</div>`; }
@@ -1461,11 +1463,12 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 bks.forEach((b, idx) => {
                     const tr = document.createElement('tr'), isP = window.isBookingPast(b);
                     const paid = window.hasSlip(b);
-                    const expectedPrice = Number(b.totalPrice) || 0;
-                    const scannedPrice = b.scannedAmount !== undefined ? Number(b.scannedAmount) : (paid ? expectedPrice : 0);
-                    
                     tr.className = `transition-colors relative ${isP ? 'bg-slate-100/60 opacity-80 border-slate-200' : 'bg-white cursor-pointer hover:bg-slate-50 border-emerald-500'} border-l-4 border-r-4 ${idx===0?'border-t-4':''} ${idx===bks.length-1?'border-b-4':'border-b border-slate-100'}`;
                     
+                    if (paid && (b.slipStatus === 'mismatch' || b.slipStatus === 'invalid')) {
+                        tr.classList.replace('border-emerald-500', 'border-red-500'); // ไฮไลท์กรอบเป็นสีแดง
+                    }
+
                     tr.onclick = (e) => {
                         // ป้องกันการทำงานซ้ำซ้อนถ้าคลิกที่ปุ่มปากกา
                         if (e.target.closest('.edit-trigger') && window.isLoggedIn) { window.openEditBookingModal(b.id); return; }
@@ -1494,24 +1497,20 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                         }
                     };
                     
-                    let statusText = '', badgeBg = '', badgeText = '';
-                    if (!paid) {
-                        statusText = 'ค้างชำระ'; badgeBg = 'bg-orange-100'; badgeText = 'text-orange-700';
-                    } else if (scannedPrice < expectedPrice) {
-                        statusText = 'ยอดไม่ครบ'; badgeBg = 'bg-red-100'; badgeText = 'text-red-700';
-                    } else if (scannedPrice > expectedPrice) {
-                        statusText = 'ชำระเกิน'; badgeBg = 'bg-purple-100'; badgeText = 'text-purple-700';
-                    } else {
-                        statusText = 'ชำระแล้ว'; badgeBg = 'bg-blue-100'; badgeText = 'text-blue-700';
-                    }
-
+                    let badge = '';
                     if (isP) {
-                        badgeBg = 'bg-slate-200'; badgeText = 'text-slate-600';
-                        if (!paid) statusText = 'หมดเวลา';
-                        else if (scannedPrice === expectedPrice) statusText = 'สำเร็จ';
+                        badge = paid ? `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black bg-slate-200 text-slate-600">สำเร็จ</span>` : `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black bg-slate-200 text-slate-500">หมดเวลา</span>`;
+                    } else {
+                        if (!paid) {
+                            badge = `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black bg-orange-100 text-orange-700">ค้างชำระ</span>`;
+                        } else if (b.slipStatus === 'mismatch') {
+                            badge = `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black bg-red-100 text-red-700 border border-red-300 shadow-sm animate-pulse">ยอดไม่ตรง!</span>`;
+                        } else if (b.slipStatus === 'invalid') {
+                            badge = `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black bg-red-100 text-red-700 border border-red-300">สลิปมีปัญหา</span>`;
+                        } else {
+                            badge = `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black bg-blue-100 text-blue-700">ชำระแล้ว</span>`;
+                        }
                     }
-                    
-                    const badge = `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black ${badgeBg} ${badgeText}">${statusText}</span>`;
                     
                     const dObj = window.parseLocalDate(b.date);
                     const thaiDayNames = ["วันอาทิตย์", "วันจันทร์", "วันอังคาร", "วันพุธ", "วันพฤหัสฯ", "วันศุกร์", "วันเสาร์"];
@@ -1674,21 +1673,11 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 const excelData = records.sort((a,b) => {
                     if (a.date !== b.date) return a.date.localeCompare(b.date);
                     return a.time.localeCompare(b.time);
-                }).map((b, i) => {
-                    const hasSlip = window.hasSlip(b);
-                    const exp = Number(b.totalPrice)||0;
-                    const scn = b.scannedAmount !== undefined ? Number(b.scannedAmount) : exp;
-                    let status = 'ชำระแล้ว';
-                    if (!hasSlip) status = 'ค้างชำระ';
-                    else if (scn < exp) status = 'ยอดไม่ครบ';
-                    else if (scn > exp) status = 'ชำระเกิน';
-                    
-                    return { 
-                        'ลำดับ': i+1, 'วันที่จอง': b.date, 'เวลาเริ่ม': b.time, 'จำนวน ชม.': b.hours, 
-                        'สนาม': b.court, 'ชื่อผู้จอง': b.customerName, 'บ้านเลขที่': `125/${b.address}`, 
-                        'ยอดรวม (บาท)': exp, 'ยอดโอนจริง (บาท)': hasSlip ? scn : 0, 'สถานะ': status 
-                    };
-                });
+                }).map((b, i) => ({ 
+                    'ลำดับ': i+1, 'วันที่จอง': b.date, 'เวลาเริ่ม': b.time, 'จำนวน ชม.': b.hours, 
+                    'สนาม': b.court, 'ชื่อผู้จอง': b.customerName, 'บ้านเลขที่': `125/${b.address}`, 
+                    'ยอดรวม (บาท)': b.totalPrice, 'สถานะ': window.hasSlip(b)?'ชำระแล้ว':'ค้างชำระ' 
+                }));
                 const ws = XLSX.utils.json_to_sheet(excelData);
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Archive");
@@ -1735,17 +1724,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
         window.executeExcelExport = () => {
             const sd = document.getElementById('exportStartDate').value, ed = document.getElementById('exportEndDate').value;
             if (!sd || !ed) return window.showAlert("กรุณาเลือกช่วงวันที่"); if (sd > ed) return window.showAlert("วันที่เริ่มต้นต้องไม่มากกว่าวันที่สิ้นสุด");
-            
-            const getStatusTxt = (b) => {
-                if(!window.hasSlip(b)) return 'ค้างชำระ';
-                const exp = Number(b.totalPrice)||0;
-                const scn = b.scannedAmount !== undefined ? Number(b.scannedAmount) : exp;
-                if(scn < exp) return 'ยอดไม่ครบ';
-                if(scn > exp) return 'ชำระเกิน';
-                return 'ชำระแล้ว';
-            };
-
-            const data = window.allBookingsCache.filter(b => b.date >= sd && b.date <= ed).sort((a,b)=>a.date!==b.date?a.date.localeCompare(b.date):a.time.localeCompare(b.time)).map((b, i) => ({ 'ลำดับ': i+1, 'วันที่จอง': b.date, 'เวลาเริ่ม': b.time, 'จำนวน ชม.': b.hours, 'สนาม': b.court, 'ชื่อผู้จอง': b.customerName, 'บ้านเลขที่': `125/${b.address}`, 'เจ้าของแปลง': b.ownerName||'-', 'เบอร์โทร': b.phoneNumber||'-', 'ยอดรวม (บาท)': b.totalPrice, 'ยอดโอนจริง (บาท)': (b.scannedAmount !== undefined ? b.scannedAmount : (window.hasSlip(b)?b.totalPrice:0)), 'สถานะ': getStatusTxt(b), 'อ้างอิง': window.generateRef(b) }));
+            const data = window.allBookingsCache.filter(b => b.date >= sd && b.date <= ed).sort((a,b)=>a.date!==b.date?a.date.localeCompare(b.date):a.time.localeCompare(b.time)).map((b, i) => ({ 'ลำดับ': i+1, 'วันที่จอง': b.date, 'เวลาเริ่ม': b.time, 'จำนวน ชม.': b.hours, 'สนาม': b.court, 'ชื่อผู้จอง': b.customerName, 'บ้านเลขที่': `125/${b.address}`, 'เจ้าของแปลง': b.ownerName||'-', 'เบอร์โทร': b.phoneNumber||'-', 'ยอดรวม (บาท)': b.totalPrice, 'สถานะ': window.hasSlip(b)?'ชำระแล้ว':'ค้างชำระ', 'อ้างอิง': window.generateRef(b) }));
             if (!data.length) return window.showAlert("ไม่พบข้อมูลในช่วงที่เลือก");
             XLSX.writeFile({SheetNames:["Bookings"], Sheets:{Bookings:XLSX.utils.json_to_sheet(data)}}, `Makmai_Tennis_Report_${sd}_to_${ed}.xlsx`);
             window.closeModal(); window.showAlert("ดาวน์โหลด Excel สำเร็จ");
@@ -1929,19 +1908,10 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             document.querySelector('#receiptModal > div').className = 'bg-white max-w-xl w-full relative flex flex-col items-center p-0 md:p-4 shadow-2xl';
             document.getElementById('receiptModal').classList.add('modal-active');
         };
-        window.deleteBooking = async (id) => {
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id));
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบรายการในอดีตไม่ได้ (ต้องเปิดโหมดแอดมิน)");
-            const confirmed = await window.customConfirm("คุณแน่ใจว่าต้องการลบรายการจองนี้? ข้อมูลจะไม่สามารถกู้คืนได้", "ยืนยันการลบ?", "danger");
-            if (!confirmed) return;
-            try {
-                await deleteDoc(doc(collectionRef, String(id)));
-                window.showAlert("🗑️ ลบข้อมูลเรียบร้อย", "success");
-            } catch (err) {
-                console.error(err);
-                window.showAlert("❌ ลบข้อมูลไม่สำเร็จ", "danger");
-            }
-        };
+
+        // --- RESTORED MISSING BOOKING FUNCTIONS ---
+        window.deleteBooking = (id) => { const b = window.allBookingsCache.find(x => String(x.id) === String(id)); if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบรายการในอดีตไม่ได้ (ต้องเปิดโหมดแอดมิน)"); window.itemToDeleteId = b?b.id:id; document.getElementById('confirmModal').classList.add('modal-active'); };
+        document.getElementById('confirmDeleteBtn').onclick = async () => { if (window.itemToDeleteId === null) return; try { await deleteDoc(doc(collectionRef, String(window.itemToDeleteId))); window.showAlert("ลบรายการจองออนไลน์เรียบร้อย"); window.closeConfirmModal(); } catch (err) { window.showAlert("ลบไม่ได้: " + err.message); } };
 
         const compressImage = (file) => {
             return new Promise((resolve, reject) => {
@@ -1949,106 +1919,48 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 reader.onload = (e) => {
                     const img = new Image(); img.onerror = () => reject(new Error("ไฟล์ไม่ใช่รูปภาพ")); img.src = e.target.result;
                     img.onload = () => {
-                        // ปรับขนาดภาพลงเล็กน้อย (1000px) และลด Quality เหลือ 85% เพื่อให้ไฟล์เบาลง ไม่เกิด Timeout
-                        const canvas = document.createElement('canvas'); const MAX = 1000; let w = img.width, h = img.height;
+                        const canvas = document.createElement('canvas'); const MAX = 600; let w = img.width, h = img.height;
                         if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } else { if (h > MAX) { w *= MAX / h; h = MAX; } }
-                        canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); 
-                        resolve(canvas.toDataURL('image/jpeg', 0.85)); 
+                        canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); resolve(canvas.toDataURL('image/jpeg', 0.6));
                     };
                 };
             });
         };
 
-        // INTEGRATE AI SCAN INTO SUBMIT
         document.getElementById('bookingForm').onsubmit = async (e) => {
             e.preventDefault(); const btn = document.getElementById('submitBtn'); const fd = new FormData(e.target);
             try {
-                btn.disabled = true; btn.innerHTML = '<span class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>กำลังใช้ AI ตรวจสอบสลิป...</span>';
+                btn.disabled = true; btn.innerHTML = '<span>กำลังบันทึก...</span>';
                 const date = fd.get('date'), time = fd.get('time'), startH = parseInt(time.split(':')[0], 10), hours = parseInt(fd.get('hours'), 10), cleanAddress = window.normalizeAddress(fd.get('address')), weekStr = window.getWeekString(date), finalOwnerName = (fd.get('ownerName1') + ' ' + fd.get('ownerName2')).trim(), todayThaiStr = window.getThailandDate(), nowH = window.getThailandHour(), files = document.getElementById('slipInput').files, isCurrentHour = (date === todayThaiStr && startH === nowH);
 
                 if (window.isPastBookingMode) {
-                    if (date > todayThaiStr || (date === todayThaiStr && startH > nowH)) return window.showAlert("❌ โหมดบันทึกย้อนหลัง ใช้สำหรับเวลาที่ผ่านไปแล้วเท่านั้น", "danger");
+                    if (date > todayThaiStr || (date === todayThaiStr && startH > nowH)) return window.showAlert("❌ โหมดบันทึกย้อนหลัง ใช้สำหรับเวลาที่ผ่านไปแล้วเท่านั้น");
                     if (files.length === 0) return window.showAlert("⚠️ จำเป็นต้องอัพโหลดสลิปชำระเงินเพื่อยืนยัน");
                 } else {
-                    if (date < todayThaiStr || (date === todayThaiStr && startH < nowH)) return window.showAlert("❌ ไม่สามารถจองเวลาย้อนหลังได้ กรุณาใช้ปุ่ม 'บันทึกย้อนหลัง'", "danger");
+                    if (date < todayThaiStr || (date === todayThaiStr && startH < nowH)) return window.showAlert("❌ ไม่สามารถจองเวลาย้อนหลังได้ กรุณาใช้ปุ่ม 'บันทึกย้อนหลัง'");
                     if (isCurrentHour && files.length === 0) return window.showAlert("⚠️ การจองคอร์ตเล่นทันที จำเป็นต้องอัพโหลดสลิปด้วย");
                     if (date > todayThaiStr) {
-                        if (window.allBookingsCache.filter(b => window.normalizeAddress(b.address) === cleanAddress && b.date > todayThaiStr).length >= 3) return window.showAlert(`❌ บ้านเลขที่ 125/${cleanAddress} จองล่วงหน้าเต็มโควต้า 3 ครั้งแล้ว`, "danger");
+                        if (window.allBookingsCache.filter(b => window.normalizeAddress(b.address) === cleanAddress && b.date > todayThaiStr).length >= 3) return window.showAlert(`❌ บ้านเลขที่ 125/${cleanAddress} จองล่วงหน้าเต็มโควต้า 3 ครั้งแล้ว`);
                     }
                 }
 
                 const requested = Array.from({length: hours}, (_, i) => startH + i);
-                if (window.allBookingsCache.filter(b => b.date === date && b.court === fd.get('court')).some(b => requested.some(s => s >= parseInt((b.time || "00").split(':')[0], 10) && s < parseInt((b.time || "00").split(':')[0], 10) + Number(b.hours || 1)))) return window.showAlert("❌ ช่วงเวลานี้ถูกจองแล้ว!", "danger");
+                if (window.allBookingsCache.filter(b => b.date === date && b.court === fd.get('court')).some(b => requested.some(s => s >= parseInt((b.time || "00").split(':')[0], 10) && s < parseInt((b.time || "00").split(':')[0], 10) + Number(b.hours || 1)))) return window.showAlert("❌ ช่วงเวลานี้ถูกจองแล้ว!");
 
                 let slipsArray = [];
-                let totalScannedAmount = 0;
-                let hasConnectionError = false;
-                
-                // Compress & Scan with AI
                 for(let i = 0; i < files.length; i++) {
-                    const compressedBase64 = await compressImage(files[i]);
-                    slipsArray.push(compressedBase64);
-                    const scannedAmt = Number(await scanSlipAmountWithAI(compressedBase64));
-                    
-                    if (scannedAmt === -1) {
-                        hasConnectionError = true;
-                    } else if (!isNaN(scannedAmt)) {
-                        totalScannedAmount += scannedAmt;
-                    }
+                    slipsArray.push(await compressImage(files[i]));
                 }
 
                 let implicitLightHours = 0, totalPrice = 0;
                 for(let i = 0; i < hours; i++) { if (startH + i >= 18) { totalPrice += 150; implicitLightHours++; } else totalPrice += 100; }
-                
-                // Compare scanned amount with expected total price (MUST BE EXACT)
-                if (files.length > 0) {
-                    if (hasConnectionError) {
-                        // ป้องกันกรณีแอปค้าง AI หลุด จะเด้งถามเพื่อให้ยืนยันทำรายการต่อ
-                        const confirmed = await window.customConfirm("⚠️ ระบบ AI ขัดข้อง หรืออินเทอร์เน็ตล่าช้าเกินไป\n\nคุณต้องการ 'ข้าม' การตรวจสอบยอดเงิน และยืนยันการจองเลยหรือไม่?", "❌ AI ไม่ตอบสนอง", "danger");
-                        if (!confirmed) {
-                            btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
-                            return;
-                        }
-                    } else if (totalScannedAmount === 0 || isNaN(totalScannedAmount)) {
-                        let alertMsg = `ระบบ AI ไม่สามารถอ่านยอดเงินจากสลิปได้ หรือยอดเป็น ฿0\n(ยอดที่ต้องชำระคือ ฿${totalPrice})\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`;
-                        const confirmed = await window.customConfirm(alertMsg, "❌ ตรวจสอบยอดเงิน", "danger");
-                        if (!confirmed) {
-                            btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
-                            return;
-                        }
-                    } else if (totalScannedAmount < totalPrice) {
-                        let alertMsg = `⚠️ ยอดโอนยังไม่ครบ!\nระบบ AI ตรวจพบยอดเงินในสลิปรวม: ฿${totalScannedAmount}\n(ยอดที่ต้องชำระคือ: ฿${totalPrice})\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`;
-                        const confirmed = await window.customConfirm(alertMsg, "❌ ยอดโอนยังไม่ครบ", "danger");
-                        if (!confirmed) {
-                            btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
-                            return;
-                        }
-                    } else if (totalScannedAmount > totalPrice) {
-                        let alertMsg = `⚠️ โอนเงินเกิน!\nระบบ AI ตรวจพบยอดเงินในสลิปรวม: ฿${totalScannedAmount}\n(ยอดที่ต้องชำระคือ: ฿${totalPrice})\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`;
-                        const confirmed = await window.customConfirm(alertMsg, "⚠️ โอนเงินเกิน", "warning");
-                        if (!confirmed) {
-                            btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
-                            return;
-                        }
-                    } else {
-                        // Match perfectly! Show clear green alert.
-                        const confirmed = await window.customConfirm(`✅ ชำระแล้ว (ยอดเงินถูกต้อง)\nระบบ AI ตรวจพบยอดเงิน ฿${totalScannedAmount} ตรงกับยอดชำระพอดี\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`, "ตรวจสอบยอดเงินสำเร็จ", "success");
-                        if (!confirmed) {
-                            btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
-                            return;
-                        }
-                    }
-                }
-                
-                btn.innerHTML = '<span>กำลังบันทึกข้อมูล...</span>';
-                
                 const newId = Date.now().toString() + Math.random().toString(36).substr(2, 4);
 
-                if (!collectionRef) return window.showAlert("❌ ฐานข้อมูลยังไม่ได้เชื่อมต่อ", "danger");
+                if (!collectionRef) return window.showAlert("❌ ฐานข้อมูลยังไม่ได้เชื่อมต่อ");
                 // Save 'slips' as Array, backward compatible 'slip' field kept empty or matched to index 0.
-                await setDoc(doc(collectionRef, newId), { id: newId, date, court: fd.get('court'), time: time, hours: hours, lightHours: implicitLightHours, customerName: fd.get('customerName'), phoneNumber: fd.get('phoneNumber'), address: cleanAddress, ownerName: finalOwnerName, totalPrice: totalPrice, scannedAmount: (files.length > 0 ? totalScannedAmount : 0), timestamp: Date.now(), week: weekStr, slips: slipsArray });
+                await setDoc(doc(collectionRef, newId), { id: newId, date, court: fd.get('court'), time: time, hours: hours, lightHours: implicitLightHours, customerName: fd.get('customerName'), phoneNumber: fd.get('phoneNumber'), address: cleanAddress, ownerName: finalOwnerName, totalPrice: totalPrice, timestamp: Date.now(), week: weekStr, slips: slipsArray, slipStatus: window.currentSlipStatus });
                 
-                e.target.reset(); window.updateFileName({files:[]}); window.showAlert(`บันทึก${window.isPastBookingMode ? 'ย้อนหลัง' : 'การจอง'}สำเร็จออนไลน์`, "success");
+                e.target.reset(); window.updateFileName({files:[]}); window.showAlert(`บันทึก${window.isPastBookingMode ? 'ย้อนหลัง' : 'การจอง'}สำเร็จออนไลน์`);
                 
                 if (window.isPastBookingMode) window.togglePastBookingMode();
                 else {
@@ -2057,7 +1969,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     window.updateHourOptions();
                 }
                 window.syncDateToSchedule();
-            } catch (err) { console.error(err); window.showAlert("เกิดข้อผิดพลาด: " + err.message, "danger"); } finally { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; }
+            } catch (err) { console.error(err); window.showAlert("เกิดข้อผิดพลาด: " + err.message); } finally { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; }
         };
 
         window.openEditBookingModal = (id) => {
@@ -2068,7 +1980,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             const bookingDateTime = new Date(b.date.split('-')[0], parseInt(b.date.split('-')[1],10)-1, b.date.split('-')[2], bStartH, 0, 0);
             const diffHours = (bookingDateTime.getTime() - nowDateTime.getTime()) / (1000 * 60 * 60);
 
-            if (window.hasSlip(b) && diffHours < 24 && !window.adminMode) return window.showAlert("❌ ไม่สามารถแก้ไขได้ (รายการที่ชำระเงินแล้วต้องแจ้งล่วงหน้าอย่างน้อย 24 ชั่วโมงก่อนเวลาเริ่มเล่น)", "danger");
+            if (window.hasSlip(b) && diffHours < 24 && !window.adminMode) return window.showAlert("❌ ไม่สามารถแก้ไขได้ (รายการที่ชำระเงินแล้วต้องแจ้งล่วงหน้าอย่างน้อย 24 ชั่วโมงก่อนเวลาเริ่มเล่น)");
 
             document.getElementById('editBookingId').value = b.id;
             const editDateFp = document.getElementById('editDateInput')._flatpickr; 
@@ -2096,16 +2008,16 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 btn.disabled = true; btn.innerHTML = 'กำลังบันทึก...';
                 const idValue = document.getElementById('editBookingId').value, date = fd.get('date'), court = fd.get('court'), time = fd.get('time'), hours = parseInt(fd.get('hours'), 10), startH = parseInt(time.split(':')[0], 10), weekStr = window.getWeekString(date), todayThaiStr = window.getThailandDate(), nowH = window.getThailandHour();
                 
-                if (!window.adminMode && (date < todayThaiStr || (date === todayThaiStr && startH < nowH))) return window.showAlert("❌ เปลี่ยนเป็นเวลาย้อนหลังไม่ได้", "danger");
+                if (!window.adminMode && (date < todayThaiStr || (date === todayThaiStr && startH < nowH))) return window.showAlert("❌ เปลี่ยนเป็นเวลาย้อนหลังไม่ได้");
                 const existing = window.allBookingsCache.find(x => String(x.id) === idValue); if (!existing) return;
                 const cleanAddress = window.normalizeAddress(existing.address);
 
                 if (date > todayThaiStr && !window.adminMode) {
-                    if (window.allBookingsCache.filter(b => String(b.id) !== idValue && window.normalizeAddress(b.address) === cleanAddress && b.date > todayThaiStr).length >= 3) return window.showAlert(`❌ บ้านเลขที่ 125/${cleanAddress} จองล่วงหน้าเต็มโควต้าแล้ว`, "danger");
+                    if (window.allBookingsCache.filter(b => String(b.id) !== idValue && window.normalizeAddress(b.address) === cleanAddress && b.date > todayThaiStr).length >= 3) return window.showAlert(`❌ บ้านเลขที่ 125/${cleanAddress} จองล่วงหน้าเต็มโควต้าแล้ว`);
                 }
 
                 const requested = Array.from({length: hours}, (_, i) => startH + i);
-                if (window.allBookingsCache.filter(b => String(b.id) !== idValue && b.date === date && b.court === court).some(b => requested.some(s => s >= parseInt((b.time || "00").split(':')[0], 10) && s < parseInt((b.time || "00").split(':')[0], 10) + Number(b.hours || 1)))) return window.showAlert("❌ ช่วงเวลานี้ถูกจองแล้ว!", "danger");
+                if (window.allBookingsCache.filter(b => String(b.id) !== idValue && b.date === date && b.court === court).some(b => requested.some(s => s >= parseInt((b.time || "00").split(':')[0], 10) && s < parseInt((b.time || "00").split(':')[0], 10) + Number(b.hours || 1)))) return window.showAlert("❌ ช่วงเวลานี้ถูกจองแล้ว!");
 
                 let implicitLightHours = 0, totalPrice = 0;
                 for(let i = 0; i < hours; i++) { if (startH + i >= 18) { totalPrice += 150; implicitLightHours++; } else totalPrice += 100; }
@@ -2114,8 +2026,8 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 await setDoc(doc(collectionRef, String(existing.id)), existing);
                 window.closeEditBookingModal(); 
                 window.syncScheduleToBooking(existing, false); 
-                window.showAlert("แก้ไขวัน-เวลาสำเร็จออนไลน์", "success");
-            } catch (err) { console.error(err); window.showAlert("เกิดข้อผิดพลาด: " + err.message, "danger"); } finally { btn.disabled = false; btn.innerHTML = 'บันทึกการแก้ไข'; }
+                window.showAlert("แก้ไขวัน-เวลาสำเร็จออนไลน์");
+            } catch (err) { console.error(err); window.showAlert("เกิดข้อผิดพลาด: " + err.message); } finally { btn.disabled = false; btn.innerHTML = 'บันทึกการแก้ไข'; }
         };
 
         // --- SLIP MODAL NAVIGATION & UPDATE ---
@@ -2178,20 +2090,20 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 } 
                 document.getElementById('slipModal').classList.add('modal-active'); 
             } else {
-                window.showAlert("ไม่พบรูปสลิป", "danger"); 
+                window.showAlert("ไม่พบรูปสลิป"); 
             }
         };
 
         window.addMoreSlipInModal = async () => { 
             const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ เพิ่มสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ เพิ่มสลิปไม่ได้ (เลยเวลาแล้ว)"); 
             window.currentUploadId = window.currentViewingSlipId; 
             document.getElementById('updateSlipInput').click(); 
         };
 
         window.triggerUploadSlip = (id) => { 
             const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ อัปโหลดสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ อัปโหลดสลิปไม่ได้ (เลยเวลาแล้ว)"); 
             window.currentUploadId = id; 
             document.getElementById('updateSlipInput').click(); 
         };
@@ -2203,11 +2115,11 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
 
         window.removeSlip = async (id, fromM = false) => { 
             const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
+            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบสลิปไม่ได้ (เลยเวลาแล้ว)"); 
             
             const isLast = window.currentSlipArray.length <= 1;
-            const msg = isLast ? "⚠️ ลบรูปสลิปใบสุดท้าย และเปลี่ยนสถานะเป็น 'ค้างชำระ' ใช่หรือไม่?" : "ยืนยันการลบรูปสลิปใบนี้?\nระบบจะทำการสแกนยอดเงินรวมใหม่";
-            const confirmed = await window.customConfirm(msg, "ยืนยันการลบสลิป", "danger");
+            const msg = isLast ? "⚠️ ลบรูปสลิปใบสุดท้าย และเปลี่ยนสถานะเป็น 'ค้างชำระ' ใช่หรือไม่?" : "ยืนยันการลบรูปสลิปใบนี้?";
+            const confirmed = await window.customConfirm(msg, "ยืนยันการลบสลิป", true);
             if (!confirmed) return; 
             
             try { 
@@ -2216,18 +2128,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 
                 b.slips = [...window.currentSlipArray];
                 if (b.slip) b.slip = ""; // Clear old legacy field just in case
-
-                if (b.slips.length === 0) {
-                    b.scannedAmount = 0;
-                } else {
-                    window.showAlert("กำลังอัปเดตยอดเงินรวมใหม่...", "warning");
-                    let newTotal = 0;
-                    for (let slipData of b.slips) {
-                         const amt = Number(await scanSlipAmountWithAI(slipData));
-                         if (!isNaN(amt) && amt !== -1) newTotal += amt;
-                    }
-                    b.scannedAmount = newTotal;
-                }
                 
                 await setDoc(doc(collectionRef, String(b.id)), b); 
                 
@@ -2242,91 +2142,40 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                         window.updateSlipModalView();
                     }
                 } 
-                window.showAlert("ลบสลิปเรียบร้อย", "success"); 
-            } catch (e) { window.showAlert("ลบสลิปไม่สำเร็จ", "danger"); } 
+                window.showAlert("ลบสลิปเรียบร้อย"); 
+            } catch (e) { window.showAlert("ลบสลิปไม่สำเร็จ"); } 
         };
         
-        // INTEGRATE AI SCAN INTO UPDATE SLIP
         document.getElementById('updateSlipInput').onchange = async (e) => {
             const files = e.target.files; if (files.length === 0 || !window.currentUploadId) return;
             try {
                 const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentUploadId));
                 if (b) { 
-                    window.showAlert("กำลังใช้ AI สแกนและรวมยอดเงินของสลิปทั้งหมด...");
-                    let existingSlips = window.getSlips(b); // ดึงสลิปเก่าทั้งหมดที่มีอยู่
-                    
-                    // เพิ่มสลิปใหม่ที่เพิ่งอัปโหลดเข้าไปต่อท้าย
+                    let existingSlips = window.getSlips(b);
                     for(let i=0; i<files.length; i++) {
-                        const compressedBase64 = await compressImage(files[i]);
-                        existingSlips.push(compressedBase64);
+                        existingSlips.push(await compressImage(files[i]));
                     }
-
-                    let totalScannedAmount = 0;
-                    let hasConnectionError = false;
-                    
-                    // ให้ AI สแกนสลิปทุกใบ (ทั้งเก่าและใหม่) เพื่อหาผลรวมที่แท้จริง
-                    for(let i=0; i<existingSlips.length; i++) {
-                        const scannedAmt = Number(await scanSlipAmountWithAI(existingSlips[i]));
-                        if (scannedAmt === -1) {
-                            hasConnectionError = true;
-                        } else if (!isNaN(scannedAmt)) {
-                            totalScannedAmount += scannedAmt;
-                        }
-                    }
-                    
-                    const expectedPrice = Number(b.totalPrice);
-                    
-                    if (hasConnectionError) {
-                        const confirmed = await window.customConfirm("⚠️ ระบบ AI ขัดข้อง หรืออินเทอร์เน็ตล่าช้าเกินไป\n\nคุณต้องการ 'ข้าม' การตรวจสอบและบันทึกสลิปเลยหรือไม่?", "❌ AI ไม่ตอบสนอง", "danger");
-                        if (!confirmed) {
-                             e.target.value = ''; window.currentUploadId = null; return;
-                        }
-                    } else if (totalScannedAmount === 0 || isNaN(totalScannedAmount)) {
-                        let alertMsg = `ระบบ AI ไม่สามารถอ่านยอดเงินจากสลิปได้ หรือยอดรวมเป็น ฿0\n(ยอดจองของรายการนี้คือ ฿${expectedPrice})\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`;
-                        const confirmed = await window.customConfirm(alertMsg, "❌ ตรวจสอบยอดเงิน", "danger");
-                        if (!confirmed) {
-                             e.target.value = ''; window.currentUploadId = null; return;
-                        }
-                    } else if (totalScannedAmount < expectedPrice) {
-                        let alertMsg = `⚠️ ยอดโอนยังไม่ครบ!\nระบบ AI อ่านยอดเงินรวมจากสลิปทั้งหมดได้: ฿${totalScannedAmount}\n(ยอดจองของรายการนี้คือ ฿${expectedPrice})\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`;
-                        const confirmed = await window.customConfirm(alertMsg, "❌ ยอดโอนยังไม่ครบ", "danger");
-                        if (!confirmed) {
-                             e.target.value = ''; window.currentUploadId = null; return;
-                        }
-                    } else if (totalScannedAmount > expectedPrice) {
-                        let alertMsg = `⚠️ โอนเงินเกิน!\nระบบ AI อ่านยอดเงินรวมจากสลิปทั้งหมดได้: ฿${totalScannedAmount}\n(ยอดจองของรายการนี้คือ ฿${expectedPrice})\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`;
-                        const confirmed = await window.customConfirm(alertMsg, "⚠️ โอนเงินเกิน", "warning");
-                        if (!confirmed) {
-                             e.target.value = ''; window.currentUploadId = null; return;
-                        }
-                    } else {
-                        const confirmed = await window.customConfirm(`✅ ชำระแล้ว (ยอดเงินถูกต้อง)\nระบบ AI อ่านยอดเงินรวมได้ ฿${totalScannedAmount} ตรงกับยอดชำระพอดี\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`, "ตรวจสอบยอดเงินสำเร็จ", "success");
-                        if (!confirmed) {
-                             e.target.value = ''; window.currentUploadId = null; return;
-                        }
-                    }
-
-                    // บันทึกสลิปทั้งหมด (ของเก่า + ของใหม่)
                     b.slips = existingSlips;
-                    b.scannedAmount = totalScannedAmount;
                     if(b.slip) b.slip = ""; // clear legacy
                     
                     await setDoc(doc(collectionRef, String(b.id)), b); 
                     
                     if (document.getElementById('slipModal').classList.contains('modal-active')) {
                         window.currentSlipArray = [...b.slips];
-                        window.currentSlipIndex = window.currentSlipArray.length - 1; // เลื่อนไปแสดงรูปที่เพิ่งอัปโหลดใหม่สุด
+                        window.currentSlipIndex = window.currentSlipArray.length - 1; // Go to newly added
                         window.updateSlipModalView();
                     }
-                    window.showAlert(`เพิ่มสลิปเรียบร้อย (รวมทั้งหมด ${existingSlips.length} รูป)`, "success"); 
+                    window.showAlert(`เพิ่มสลิปเรียบร้อย (${files.length} รูป)`); 
                 }
-            } catch (err) { window.showAlert("อัปโหลดไม่สำเร็จ", "danger"); } finally { e.target.value = ''; window.currentUploadId = null; }
+            } catch (err) { window.showAlert("อัปโหลดไม่สำเร็จ"); } finally { e.target.value = ''; window.currentUploadId = null; }
         };
 
         // --- FIREBASE LOGIC ---
         window.initAuth = async function() {
             try {
                 app = initializeApp(config); auth = getAuth(app); db = getFirestore(app); collectionRef = collection(db, 'bookings');
+                functionsClient = getFunctions(app, 'asia-southeast1');
+
                 await signInAnonymously(auth);
                 onSnapshot(collectionRef, (snap) => {
                     window.allBookingsCache = []; snap.forEach(d => window.allBookingsCache.push(d.data()));
@@ -2341,7 +2190,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                         unique.forEach(c => { const opt = document.createElement('option'); opt.value = JSON.stringify(c); opt.textContent = c.name; s.appendChild(opt); });
                     }
                 });
-            } catch (e) { console.error(e); window.showAlert("เชื่อมต่อ Firebase ไม่สำเร็จ", "danger"); }
+            } catch (e) { console.error(e); window.showAlert("เชื่อมต่อ Firebase ไม่สำเร็จ"); }
             init(); window.updateLoginUI();
         };
 
