@@ -1705,13 +1705,88 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             }
         };
 
-        window.executeAutoMaintenance = async function() {
+window.executeAutoMaintenance = async function() {
             const btn = document.getElementById('btnStartMaintenance');
             btn.disabled = true;
             
             const records = window.pendingMaintenance.records;
-            const qTitle = window.pendingMaintenance.title.replace(/\//g, '_').replace(/ /g, '');
+            
+            // --- ส่วนที่ 1: หาช่วงวันที่เก่าสุด และใหม่สุดเพื่อใช้ตั้งชื่อไฟล์ ---
+            let minDate = records[0].date;
+            let maxDate = records[0].date;
+            records.forEach(b => {
+                if (b.date < minDate) minDate = b.date;
+                if (b.date > maxDate) maxDate = b.date;
+            });
+            const fileSuffix = `${minDate}_ถึง_${maxDate}`;
+            // --------------------------------------------------------
 
+            try {
+                // 1. Export Excel
+                btn.innerText = "กำลังโหลด Excel... (1/3)";
+                const excelData = records.sort((a,b) => {
+                    if (a.date !== b.date) return a.date.localeCompare(b.date);
+                    return a.time.localeCompare(b.time);
+                }).map((b, i) => {
+                    const hasSlip = window.hasSlip(b);
+                    const exp = Number(b.totalPrice)||0;
+                    const scn = b.scannedAmount !== undefined ? Number(b.scannedAmount) : exp;
+                    let status = 'ชำระแล้ว';
+                    if (!hasSlip) status = 'ค้างชำระ';
+                    else if (scn < exp) status = 'ยอดไม่ครบ';
+                    else if (scn > exp) status = 'ชำระเกิน';
+                    
+                    return { 
+                        'ลำดับ': i+1, 'วันที่จอง': b.date, 'เวลาเริ่ม': b.time, 'จำนวน ชม.': b.hours, 
+                        'สนาม': b.court, 'ชื่อผู้จอง': b.customerName, 'บ้านเลขที่': `125/${b.address}`, 
+                        'ยอดรวม (บาท)': exp, 'ยอดโอนจริง (บาท)': hasSlip ? scn : 0, 'สถานะ': status 
+                    };
+                });
+                const ws = XLSX.utils.json_to_sheet(excelData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Archive");
+                
+                // --- ส่วนที่ 2: แก้ไขการตั้งชื่อไฟล์ Excel ---
+                XLSX.writeFile(wb, `Makmai_Backup_Excel_${fileSuffix}.xlsx`);
+
+                await new Promise(r => setTimeout(r, 1500));
+
+                // 2. Export JSON
+                btn.innerText = "กำลังโหลด JSON... (2/3)";
+                const jsonBlob = new Blob([JSON.stringify(records, null, 2)], {type: "application/json"});
+                const jsonUrl = URL.createObjectURL(jsonBlob);
+                const a = document.createElement('a');
+                a.href = jsonUrl;
+                
+                // --- ส่วนที่ 3: แก้ไขการตั้งชื่อไฟล์ JSON ---
+                a.download = `Makmai_Backup_JSON_${fileSuffix}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(jsonUrl);
+
+                await new Promise(r => setTimeout(r, 1500));
+
+                // 3. Cleanup Online DB (Firestore)
+                btn.innerText = "กำลังลบข้อมูลเก่า... (3/3)";
+                for (const b of records) {
+                    await deleteDoc(doc(collectionRef, String(b.id)));
+                }
+
+                // Finished
+                localStorage.setItem(window.pendingMaintenance.flagKey, 'true');
+                window.closeMaintenanceModal();
+                window.updateMaintenanceWarning();
+                window.showAlert("✅ การบำรุงรักษาฐานข้อมูลเสร็จสมบูรณ์เรียบร้อยแล้ว", "success");
+                
+            } catch(e) {
+                console.error(e);
+                window.showAlert("❌ เกิดข้อผิดพลาด: " + e.message, "danger");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "เริ่มดำเนินการ";
+            }
+        };
             try {
                 // 1. Export Excel
                 btn.innerText = "กำลังโหลด Excel... (1/3)";
