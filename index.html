@@ -218,6 +218,14 @@
                                     <span id="slipFileName" class="truncate">อัพโหลดสลิปจ่ายเงิน</span>
                                 </label>
                             </div>
+                            
+                            <!-- เพิ่ม Checkbox ใบเสร็จหลายการจอง ตรงนี้ -->
+                            <div class="flex items-start gap-2 mt-2 px-1">
+                                <input type="checkbox" id="isMultipleSlipForm" name="isMultipleBooking" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
+                                <label for="isMultipleSlipForm" class="text-[10px] md:text-xs font-bold text-slate-500 cursor-pointer leading-tight">
+                                    ใบเสร็จหลายการจอง<br><span class="font-normal">(อนุญาตให้ยอดเงินสลิป มากกว่า ค่าจองรอบนี้ได้)</span>
+                                </label>
+                            </div>
                         </div>
 
                         <div class="px-3 md:px-4 py-2 md:py-2.5 bg-slate-50 rounded-xl flex justify-between items-center border-2 border-dashed border-blue-100">
@@ -302,6 +310,29 @@
                     </div>
                 </div>
 
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals (Forms and Popups) -->
+    
+    <!-- Upload Slip Prompt Modal (หน้าต่างขึ้นมาก่อนเลือกไฟล์จริง ตอนกดปุ่ม อัพโหลดสลิป บนตาราง) -->
+    <div id="uploadSlipPromptModal" class="fixed inset-0 bg-slate-900/80 z-[110] hidden items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center mx-2">
+            <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-slate-800 mb-6">อัพโหลดสลิปชำระเงิน</h3>
+            <label class="flex items-center justify-center gap-3 mb-8 bg-slate-50 p-4 rounded-xl border border-slate-200 cursor-pointer hover:bg-blue-50 transition-colors">
+                <input type="checkbox" id="updateIsMultipleSlip" class="w-5 h-5 text-blue-600 rounded cursor-pointer focus:ring-blue-500">
+                <span class="text-sm font-bold text-slate-700 select-none text-left leading-tight">
+                    ใบเสร็จหลายการจอง<br>
+                    <span class="text-[10px] text-slate-500 font-normal">(อนุญาตให้ยอดสลิปมากกว่าค่าจองได้)</span>
+                </span>
+            </label>
+            <div class="flex gap-3">
+                <button onclick="window.closeUploadPrompt()" class="flex-1 px-4 py-3 bg-slate-100 text-slate-600 rounded-xl font-bold hover:bg-slate-200 transition-colors">ยกเลิก</button>
+                <button onclick="document.getElementById('updateSlipInput').click();" class="flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg">เลือกไฟล์รูป</button>
             </div>
         </div>
     </div>
@@ -459,7 +490,7 @@
         </div>
     </div>
 
-    <!-- Report Modal -->
+    <!-- Receipt Preview Modal -->
     <div id="reportModal" class="fixed inset-0 bg-slate-900/90 z-50 hidden items-center justify-center p-2 sm:p-4 overflow-y-auto">
         <div class="bg-white rounded-3xl max-w-4xl w-full p-4 sm:p-8 relative mx-1">
             <button onclick="window.closeModal()" class="no-print absolute top-4 right-4 text-slate-400 z-10 hover:text-slate-700">✕</button>
@@ -471,7 +502,6 @@
     <div id="backupModal" class="fixed inset-0 bg-slate-900/90 z-[60] hidden items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl max-w-md w-full p-6 sm:p-8 relative shadow-2xl mx-2 text-center">
             <button onclick="window.closeModal()" class="no-print absolute top-4 right-4 text-slate-400 z-10 hover:text-slate-700"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
-            
             <div class="text-center mb-6 md:mb-8">
                 <div class="w-12 h-12 md:w-16 md:h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
                     <svg class="w-6 h-6 md:w-8 md:h-8 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"></path></svg>
@@ -479,19 +509,16 @@
                 <h3 class="text-lg md:text-xl font-black text-slate-800">จัดการฐานข้อมูล</h3>
                 <p class="text-xs md:text-sm text-slate-500 mt-1">Backup / Restore Database</p>
             </div>
-            
             <div class="space-y-3 md:space-y-4">
                 <button onclick="window.backupData()" class="w-full bg-white border-2 border-slate-200 hover:border-blue-500 hover:text-blue-600 text-slate-600 py-3 md:py-4 rounded-xl font-bold flex flex-col items-center gap-1 md:gap-2 transition-all">
                     <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                     <span class="text-sm md:text-base">ดาวน์โหลดไฟล์ JSON (ย้ายเครื่อง)</span>
                 </button>
-                
                 <button onclick="window.triggerRestore()" class="w-full bg-slate-50 hover:bg-amber-50 text-slate-600 hover:text-amber-600 border-2 border-transparent hover:border-amber-300 py-3 md:py-4 rounded-xl font-bold flex flex-col items-center gap-1 md:gap-2 transition-all">
                     <svg class="w-5 h-5 md:w-6 md:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                     <span class="text-sm md:text-base">นำเข้าข้อมูล (Import / Merge JSON)</span>
                 </button>
             </div>
-            
             <p class="text-[10px] md:text-xs text-slate-400 text-center mt-4 md:mt-6">* ไฟล์ข้อมูลจะถูกบันทึกเป็นนามสกุล .json</p>
         </div>
     </div>
@@ -501,21 +528,17 @@
         <div class="max-w-2xl w-full flex flex-col items-center gap-4 mx-2">
             <div class="relative w-full flex justify-center bg-black rounded-2xl overflow-hidden ring-1 ring-white/10 group">
                 <img id="slipPreview" src="" class="max-h-[60vh] md:max-h-[70vh] w-auto object-contain shadow-2xl transition-opacity duration-300">
-                
-                <!-- Navigation UI for Multiple Slips -->
                 <button id="btnPrevSlip" onclick="window.prevSlip()" class="absolute left-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-sm transition-all hidden">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                 </button>
                 <button id="btnNextSlip" onclick="window.nextSlip()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/80 text-white rounded-full p-2 backdrop-blur-sm transition-all hidden">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                 </button>
-                <div id="slipCounter" class="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md hidden">
-                    1 / 1
-                </div>
+                <div id="slipCounter" class="absolute top-4 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md hidden">1 / 1</div>
             </div>
             <div class="no-print flex flex-wrap justify-center gap-2 sm:gap-3 w-full p-3 sm:p-4 bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 shadow-2xl relative z-10">
                 <button onclick="window.closeModal()" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer text-sm md:text-base">ปิดหน้าต่าง</button>
-                <button id="btnChangeSlipModal" onclick="window.addMoreSlipInModal()" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer text-sm md:text-base">+ เพิ่มสลิปใหม่</button>
+                <button id="btnChangeSlipModal" onclick="window.addMoreSlipInModal()" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-emerald-600 hover:bg-emerald-50 text-white rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer text-sm md:text-base">+ เพิ่มสลิปใหม่</button>
                 <button id="btnRemoveSlipModal" onclick="window.removeCurrentSlipInModal()" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-red-500 hover:bg-red-400 text-white rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer text-sm md:text-base">ลบรูปนี้</button>
                 <button type="button" onclick="window.print()" class="px-4 sm:px-6 py-2 sm:py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all flex items-center gap-2 shadow-lg active:scale-95 cursor-pointer text-sm md:text-base">พิมพ์ภาพ / PDF</button>
             </div>
@@ -539,9 +562,25 @@
             measurementId: "G-LK3TBJ16D0"
         };
 
-        window.isLoggedIn = localStorage.getItem('makmai_session') === 'true';
-        window.adminMode = localStorage.getItem('makmai_admin') === 'true';
-        window.geminiKey = localStorage.getItem('gemini_api_key') || '';
+        // Safe Storage Wrapper for Iframe Preview Sandbox
+        const safeStorage = (() => {
+            let memory = {};
+            try {
+                localStorage.setItem('__test__', '1');
+                localStorage.removeItem('__test__');
+                return localStorage;
+            } catch (e) {
+                return {
+                    getItem: (k) => memory[k] || null,
+                    setItem: (k, v) => { memory[k] = String(v); },
+                    removeItem: (k) => { delete memory[k]; }
+                };
+            }
+        })();
+
+        window.isLoggedIn = safeStorage.getItem('makmai_session') === 'true';
+        window.adminMode = safeStorage.getItem('makmai_admin') === 'true';
+        window.geminiKey = safeStorage.getItem('gemini_api_key') || '';
         window.currentFilterWeek = '';
         window.allBookingsCache = [];
         window.highlightedBookingId = null;
@@ -732,11 +771,12 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             setTimeout(() => box.style.display = 'none', 4000); 
         };
 
-        window.closeModal = () => { document.querySelectorAll('.fixed').forEach(m => m.classList.remove('modal-active')); document.title = originalDocTitle; };
+        window.closeModal = () => { document.querySelectorAll('.fixed').forEach(m => m.classList.remove('modal-active')); document.title = originalDocTitle; window.currentUploadId = null; };
         window.closeConfirmModal = () => { document.getElementById('confirmModal').classList.remove('modal-active'); };
         window.closeEditBookingModal = () => { document.getElementById('editBookingModal').classList.remove('modal-active'); };
         window.openBackupModal = () => { document.getElementById('backupModal').classList.add('modal-active'); };
         window.closeMaintenanceModal = () => { document.getElementById('autoMaintenanceModal').classList.remove('modal-active'); };
+        window.closeUploadPrompt = () => { document.getElementById('uploadSlipPromptModal').classList.remove('modal-active'); window.currentUploadId = null; };
 
         window.houseOwnerDB = {};
         const rawOwnerCSV = `
@@ -1001,7 +1041,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
 125/256,คุณเฉลิมชัย  พัวพิพัฒน์
 125/257,คุณเรวดี  รังคะรัตน
 125/258,คุณยอดพงศ์  รามสูต
-125/259,คุณศิริพร  วัฒกุล
+125/259,คุณศิริพร  วัฒนกุล
 125/260,คุณศิริพร วัฒนกุล
 125/261,คุณศิริพร  วัฒกุล
 125/262,คุณเสริมศักดิ์  ลักษณานันท์
@@ -1226,7 +1266,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             return `${b.date} ${b.time.split(':')[0].padStart(2, '0')}:00` <= nowStr;
         };
 
-        // Helper function for multiple slips
         window.getSlips = function(b) {
             if (!b) return [];
             if (b.slips && Array.isArray(b.slips)) return b.slips;
@@ -1324,8 +1363,8 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
         window.toggleLogin = function() {
             if (window.isLoggedIn) { 
                 window.isLoggedIn = window.adminMode = false; 
-                localStorage.removeItem('makmai_session');
-                localStorage.removeItem('makmai_admin');
+                safeStorage.removeItem('makmai_session');
+                safeStorage.removeItem('makmai_admin');
                 window.updateLoginUI(); 
                 window.showAlert("ออกจากระบบแล้ว", "success"); 
             } else {
@@ -1351,9 +1390,9 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             if (pass === "Admin125/000") {
                 window.isLoggedIn = true;
                 window.geminiKey = key;
-                localStorage.setItem('makmai_session', 'true');
+                safeStorage.setItem('makmai_session', 'true');
                 if (key) {
-                    localStorage.setItem('gemini_api_key', key);
+                    safeStorage.setItem('gemini_api_key', key);
                 }
                 window.closeLoginModal();
                 window.updateLoginUI();
@@ -1401,14 +1440,14 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 const p = await window.customPrompt("รหัสผู้ดูแล:");
                 if (p === "Mtennis") {
                     window.adminMode = true;
-                    localStorage.setItem('makmai_admin', 'true');
+                    safeStorage.setItem('makmai_admin', 'true');
                     const btn = document.getElementById('adminBtn'); btn.classList.replace('bg-red-50', 'bg-red-600'); btn.classList.replace('text-red-600', 'text-white'); btn.innerHTML = '🔓 ปลดล็อกแล้ว (เปิด)';
                     const fp = document.getElementById('scheduleDateInput')?._flatpickr; if (fp) { fp.set('minDate', null); fp.set('maxDate', null); }
                     window.showAlert("ปลดล็อกโหมดแอดมิน"); window.renderAll();
                 } else if (p !== null) window.showAlert("❌ รหัสไม่ถูกต้อง");
             } else { 
                 window.adminMode = false; 
-                localStorage.removeItem('makmai_admin');
+                safeStorage.removeItem('makmai_admin');
                 window.updateLoginUI(); 
                 window.showAlert("ปิดโหมดแอดมิน"); 
             }
@@ -1454,10 +1493,15 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                         
                         let cls = 'slot-booked';
                         if (hasSlip) {
-                            if (fin) cls = 'slot-played';
-                            else if (scannedPrice < expectedPrice) cls = 'slot-underpaid';
-                            else if (scannedPrice > expectedPrice) cls = 'slot-overpaid';
-                            else cls = 'slot-paid';
+                            if (fin) {
+                                cls = 'slot-played';
+                            } else if (scannedPrice < expectedPrice) {
+                                cls = 'slot-underpaid';
+                            } else if (scannedPrice > expectedPrice && !b.isMultipleBooking) {
+                                cls = 'slot-overpaid';
+                            } else {
+                                cls = 'slot-paid';
+                            }
                         }
                         
                         td.innerHTML = `<div class="rounded py-1 md:py-2 text-[10px] md:text-xs font-bold ${cls} ${exc} flex flex-col justify-center items-center leading-tight min-w-0 w-full overflow-hidden"><span class="truncate w-full text-center px-1">${b.customerName}</span><span class="text-[8px] md:text-[10px] font-medium opacity-90 mt-0.5">125/${b.address}</span></div>`;
@@ -1469,7 +1513,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
         };
 
         window.selectSlot = function(d, t, c) {
-            if (!window.isLoggedIn) return; // Prevent guest interaction
+            if (!window.isLoggedIn) return; 
             const today = window.getThailandDate();
             const nowH = window.getThailandHour();
             const h = parseInt(t.split(':')[0], 10);
@@ -1514,7 +1558,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     tr.className = `transition-colors relative ${isP ? 'bg-slate-100/60 opacity-80 border-slate-200' : 'bg-white cursor-pointer hover:bg-slate-50 border-emerald-500'} border-l-4 border-r-4 ${idx===0?'border-t-4':''} ${idx===bks.length-1?'border-b-4':'border-b border-slate-100'}`;
                     
                     tr.onclick = (e) => {
-                        // ป้องกันการทำงานซ้ำซ้อนถ้าคลิกที่ปุ่มปากกา
                         if (e.target.closest('.edit-trigger') && window.isLoggedIn) { window.openEditBookingModal(b.id); return; }
 
                         if (!window.isLoggedIn) {
@@ -1533,7 +1576,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                             return;
                         }
                         
-                        // ถ้าคลิกในระยะคอลัมน์ที่ 0 ถึง 4 (พื้นที่ทั่วไปของแถว) จะไฮไลท์และเลื่อนจอไปที่ตารางสนาม
                         const td = e.target.closest('td');
                         const cellIndex = td ? td.cellIndex : -1;
                         if (cellIndex >= 0 && cellIndex <= 4) {
@@ -1546,7 +1588,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                         statusText = 'ค้างชำระ'; badgeBg = 'bg-orange-100'; badgeText = 'text-orange-700';
                     } else if (scannedPrice < expectedPrice) {
                         statusText = 'ยอดไม่ครบ'; badgeBg = 'bg-red-100'; badgeText = 'text-red-700';
-                    } else if (scannedPrice > expectedPrice) {
+                    } else if (scannedPrice > expectedPrice && !b.isMultipleBooking) {
                         statusText = 'ชำระเกิน'; badgeBg = 'bg-purple-100'; badgeText = 'text-purple-700';
                     } else {
                         statusText = 'ชำระแล้ว'; badgeBg = 'bg-blue-100'; badgeText = 'text-blue-700';
@@ -1554,8 +1596,11 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
 
                     if (isP) {
                         badgeBg = 'bg-slate-200'; badgeText = 'text-slate-600';
-                        if (!paid) statusText = 'หมดเวลา';
-                        else if (scannedPrice === expectedPrice) statusText = 'สำเร็จ';
+                        if (!paid) {
+                            statusText = 'หมดเวลา';
+                        } else if (scannedPrice === expectedPrice || (scannedPrice > expectedPrice && b.isMultipleBooking)) {
+                            statusText = 'สำเร็จ';
+                        }
                     }
                     
                     const badge = `<span class="px-2 py-0.5 rounded-full text-[9px] md:text-[10px] font-black ${badgeBg} ${badgeText}">${statusText}</span>`;
@@ -1655,7 +1700,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             const banner = document.getElementById('maintenanceWarningBanner');
             if (!banner) return;
             
-            if (!localStorage.getItem(flagKey)) {
+            if (!safeStorage.getItem(flagKey)) {
                 const cutoffMonth = (currentQ - 1) * 3 + 1;
                 const cutoffDateStr = `${y}-${String(cutoffMonth).padStart(2, '0')}-01`;
                 const oldRecords = window.allBookingsCache.filter(b => b.date < cutoffDateStr);
@@ -1687,7 +1732,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
 
             const flagKey = `makmai_maintenance_done_${prevYear}_Q${prevQ}`;
             
-            if (!localStorage.getItem(flagKey)) {
+            if (!safeStorage.getItem(flagKey)) {
                 const cutoffMonth = (currentQ - 1) * 3 + 1;
                 const cutoffDateStr = `${y}-${String(cutoffMonth).padStart(2, '0')}-01`;
                 
@@ -1703,7 +1748,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     document.getElementById('maintenanceCount').innerText = `${oldRecords.length} รายการ`;
                     document.getElementById('autoMaintenanceModal').classList.add('modal-active');
                 } else {
-                    localStorage.setItem(flagKey, 'true');
+                    safeStorage.setItem(flagKey, 'true');
                 }
             }
         };
@@ -1714,7 +1759,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             
             const records = window.pendingMaintenance.records;
             
-            // --- ส่วนที่ 1: หาช่วงวันที่เก่าสุด และใหม่สุดเพื่อใช้ตั้งชื่อไฟล์ ---
             let minDate = records[0].date;
             let maxDate = records[0].date;
             records.forEach(b => {
@@ -1722,7 +1766,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 if (b.date > maxDate) maxDate = b.date;
             });
             const fileSuffix = `${minDate}_ถึง_${maxDate}`;
-            // --------------------------------------------------------
 
             try {
                 // 1. Export Excel
@@ -1737,7 +1780,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     let status = 'ชำระแล้ว';
                     if (!hasSlip) status = 'ค้างชำระ';
                     else if (scn < exp) status = 'ยอดไม่ครบ';
-                    else if (scn > exp) status = 'ชำระเกิน';
+                    else if (scn > exp && !b.isMultipleBooking) status = 'ชำระเกิน';
                     
                     return { 
                         'ลำดับ': i+1, 'วันที่จอง': b.date, 'เวลาเริ่ม': b.time, 'จำนวน ชม.': b.hours, 
@@ -1749,7 +1792,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 const wb = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(wb, ws, "Archive");
                 
-                // --- ส่วนที่ 2: แก้ไขการตั้งชื่อไฟล์ Excel ---
                 XLSX.writeFile(wb, `Makmai_Backup_Excel_${fileSuffix}.xlsx`);
 
                 await new Promise(r => setTimeout(r, 1500));
@@ -1761,7 +1803,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 const a = document.createElement('a');
                 a.href = jsonUrl;
                 
-                // --- ส่วนที่ 3: แก้ไขการตั้งชื่อไฟล์ JSON ---
                 a.download = `Makmai_Backup_JSON_${fileSuffix}.json`;
                 document.body.appendChild(a);
                 a.click();
@@ -1770,14 +1811,13 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
 
                 await new Promise(r => setTimeout(r, 1500));
 
-                // 3. Cleanup Online DB (Firestore)
+                // 3. Cleanup Online DB
                 btn.innerText = "กำลังลบข้อมูลเก่า... (3/3)";
                 for (const b of records) {
                     await deleteDoc(doc(collectionRef, String(b.id)));
                 }
 
-                // Finished
-                localStorage.setItem(window.pendingMaintenance.flagKey, 'true');
+                safeStorage.setItem(window.pendingMaintenance.flagKey, 'true');
                 window.closeMaintenanceModal();
                 window.updateMaintenanceWarning();
                 window.showAlert("✅ การบำรุงรักษาฐานข้อมูลเสร็จสมบูรณ์เรียบร้อยแล้ว", "success");
@@ -1801,7 +1841,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 const exp = Number(b.totalPrice)||0;
                 const scn = b.scannedAmount !== undefined ? Number(b.scannedAmount) : exp;
                 if(scn < exp) return 'ยอดไม่ครบ';
-                if(scn > exp) return 'ชำระเกิน';
+                if(scn > exp && !b.isMultipleBooking) return 'ชำระเกิน';
                 return 'ชำระแล้ว';
             };
 
@@ -2009,7 +2049,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 reader.onload = (e) => {
                     const img = new Image(); img.onerror = () => reject(new Error("ไฟล์ไม่ใช่รูปภาพ")); img.src = e.target.result;
                     img.onload = () => {
-                        // ปรับขนาดภาพลงเล็กน้อย (1000px) และลด Quality เหลือ 85% เพื่อให้ไฟล์เบาลง ไม่เกิด Timeout
                         const canvas = document.createElement('canvas'); const MAX = 1000; let w = img.width, h = img.height;
                         if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } else { if (h > MAX) { w *= MAX / h; h = MAX; } }
                         canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); 
@@ -2025,6 +2064,8 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             try {
                 btn.disabled = true; btn.innerHTML = '<span class="flex items-center gap-2"><svg class="animate-spin h-4 w-4 text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>กำลังใช้ AI ตรวจสอบสลิป...</span>';
                 const date = fd.get('date'), time = fd.get('time'), startH = parseInt(time.split(':')[0], 10), hours = parseInt(fd.get('hours'), 10), cleanAddress = window.normalizeAddress(fd.get('address')), weekStr = window.getWeekString(date), finalOwnerName = (fd.get('ownerName1') + ' ' + fd.get('ownerName2')).trim(), todayThaiStr = window.getThailandDate(), nowH = window.getThailandHour(), files = document.getElementById('slipInput').files, isCurrentHour = (date === todayThaiStr && startH === nowH);
+
+                const isMultiple = document.getElementById('isMultipleSlipForm').checked;
 
                 if (window.isPastBookingMode) {
                     if (date > todayThaiStr || (date === todayThaiStr && startH > nowH)) return window.showAlert("❌ โหมดบันทึกย้อนหลัง ใช้สำหรับเวลาที่ผ่านไปแล้วเท่านั้น", "danger");
@@ -2060,43 +2101,31 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 let implicitLightHours = 0, totalPrice = 0;
                 for(let i = 0; i < hours; i++) { if (startH + i >= 18) { totalPrice += 150; implicitLightHours++; } else totalPrice += 100; }
                 
-                // Compare scanned amount with expected total price (MUST BE EXACT)
+                // Compare scanned amount with expected total price
                 if (files.length > 0) {
                     if (hasConnectionError) {
-                        // ป้องกันกรณีแอปค้าง AI หลุด จะเด้งถามเพื่อให้ยืนยันทำรายการต่อ
                         const confirmed = await window.customConfirm("⚠️ ระบบ AI ขัดข้อง หรืออินเทอร์เน็ตล่าช้าเกินไป\n\nคุณต้องการ 'ข้าม' การตรวจสอบยอดเงิน และยืนยันการจองเลยหรือไม่?", "❌ AI ไม่ตอบสนอง", "danger");
-                        if (!confirmed) {
-                            btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
-                            return;
-                        }
+                        if (!confirmed) { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; return; }
                     } else if (totalScannedAmount === 0 || isNaN(totalScannedAmount)) {
                         let alertMsg = `ระบบ AI ไม่สามารถอ่านยอดเงินจากสลิปได้ หรือยอดเป็น ฿0\n(ยอดที่ต้องชำระคือ ฿${totalPrice})\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`;
                         const confirmed = await window.customConfirm(alertMsg, "❌ ตรวจสอบยอดเงิน", "danger");
-                        if (!confirmed) {
-                            btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
-                            return;
-                        }
+                        if (!confirmed) { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; return; }
                     } else if (totalScannedAmount < totalPrice) {
                         let alertMsg = `⚠️ ยอดโอนยังไม่ครบ!\nระบบ AI ตรวจพบยอดเงินในสลิปรวม: ฿${totalScannedAmount}\n(ยอดที่ต้องชำระคือ: ฿${totalPrice})\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`;
                         const confirmed = await window.customConfirm(alertMsg, "❌ ยอดโอนยังไม่ครบ", "danger");
-                        if (!confirmed) {
-                            btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
-                            return;
-                        }
+                        if (!confirmed) { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; return; }
                     } else if (totalScannedAmount > totalPrice) {
-                        let alertMsg = `⚠️ โอนเงินเกิน!\nระบบ AI ตรวจพบยอดเงินในสลิปรวม: ฿${totalScannedAmount}\n(ยอดที่ต้องชำระคือ: ฿${totalPrice})\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`;
-                        const confirmed = await window.customConfirm(alertMsg, "⚠️ โอนเงินเกิน", "warning");
-                        if (!confirmed) {
-                            btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
-                            return;
+                        if (isMultiple) {
+                            const confirmed = await window.customConfirm(`✅ ชำระแล้ว (ใบเสร็จหลายการจอง)\nระบบ AI ตรวจพบยอดเงินรวม ฿${totalScannedAmount}\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`, "ตรวจสอบยอดเงินสำเร็จ", "success");
+                            if (!confirmed) { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; return; }
+                        } else {
+                            let alertMsg = `⚠️ โอนเงินเกิน!\nระบบ AI ตรวจพบยอดเงินในสลิปรวม: ฿${totalScannedAmount}\n(ยอดที่ต้องชำระคือ: ฿${totalPrice})\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`;
+                            const confirmed = await window.customConfirm(alertMsg, "⚠️ โอนเงินเกิน", "warning");
+                            if (!confirmed) { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; return; }
                         }
                     } else {
-                        // Match perfectly! Show clear green alert.
                         const confirmed = await window.customConfirm(`✅ ชำระแล้ว (ยอดเงินถูกต้อง)\nระบบ AI ตรวจพบยอดเงิน ฿${totalScannedAmount} ตรงกับยอดชำระพอดี\n\nคุณต้องการยืนยันการจองนี้หรือไม่?`, "ตรวจสอบยอดเงินสำเร็จ", "success");
-                        if (!confirmed) {
-                            btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>';
-                            return;
-                        }
+                        if (!confirmed) { btn.disabled = false; btn.innerHTML = '<span>ยืนยันการจอง</span>'; return; }
                     }
                 }
                 
@@ -2105,8 +2134,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 const newId = Date.now().toString() + Math.random().toString(36).substr(2, 4);
 
                 if (!collectionRef) return window.showAlert("❌ ฐานข้อมูลยังไม่ได้เชื่อมต่อ", "danger");
-                // Save 'slips' as Array, backward compatible 'slip' field kept empty or matched to index 0.
-                await setDoc(doc(collectionRef, newId), { id: newId, date, court: fd.get('court'), time: time, hours: hours, lightHours: implicitLightHours, customerName: fd.get('customerName'), phoneNumber: fd.get('phoneNumber'), address: cleanAddress, ownerName: finalOwnerName, totalPrice: totalPrice, scannedAmount: (files.length > 0 ? totalScannedAmount : 0), timestamp: Date.now(), week: weekStr, slips: slipsArray });
+                await setDoc(doc(collectionRef, newId), { id: newId, date, court: fd.get('court'), time: time, hours: hours, lightHours: implicitLightHours, customerName: fd.get('customerName'), phoneNumber: fd.get('phoneNumber'), address: cleanAddress, ownerName: finalOwnerName, totalPrice: totalPrice, scannedAmount: (files.length > 0 ? totalScannedAmount : 0), isMultipleBooking: isMultiple, timestamp: Date.now(), week: weekStr, slips: slipsArray });
                 
                 e.target.reset(); window.updateFileName({files:[]}); window.showAlert(`บันทึก${window.isPastBookingMode ? 'ย้อนหลัง' : 'การจอง'}สำเร็จออนไลน์`, "success");
                 
@@ -2246,14 +2274,16 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId)); 
             if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ เพิ่มสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
             window.currentUploadId = window.currentViewingSlipId; 
-            document.getElementById('updateSlipInput').click(); 
+            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
+            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
         };
 
         window.triggerUploadSlip = (id) => { 
             const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
             if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ อัปโหลดสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
             window.currentUploadId = id; 
-            document.getElementById('updateSlipInput').click(); 
+            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
+            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
         };
 
         window.removeCurrentSlipInModal = () => { 
@@ -2309,13 +2339,16 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
         // INTEGRATE AI SCAN INTO UPDATE SLIP
         document.getElementById('updateSlipInput').onchange = async (e) => {
             const files = e.target.files; if (files.length === 0 || !window.currentUploadId) return;
+            window.closeUploadPrompt(); // ปิด Modal อัปโหลด
+            
+            const isMultiple = document.getElementById('updateIsMultipleSlip').checked;
+            
             try {
                 const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentUploadId));
                 if (b) { 
                     window.showAlert("กำลังใช้ AI สแกนและรวมยอดเงินของสลิปทั้งหมด...");
-                    let existingSlips = window.getSlips(b); // ดึงสลิปเก่าทั้งหมดที่มีอยู่
+                    let existingSlips = window.getSlips(b); 
                     
-                    // เพิ่มสลิปใหม่ที่เพิ่งอัปโหลดเข้าไปต่อท้าย
                     for(let i=0; i<files.length; i++) {
                         const compressedBase64 = await compressImage(files[i]);
                         existingSlips.push(compressedBase64);
@@ -2324,7 +2357,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     let totalScannedAmount = 0;
                     let hasConnectionError = false;
                     
-                    // ให้ AI สแกนสลิปทุกใบ (ทั้งเก่าและใหม่) เพื่อหาผลรวมที่แท้จริง
                     for(let i=0; i<existingSlips.length; i++) {
                         const scannedAmt = Number(await scanSlipAmountWithAI(existingSlips[i]));
                         if (scannedAmt === -1) {
@@ -2338,44 +2370,39 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     
                     if (hasConnectionError) {
                         const confirmed = await window.customConfirm("⚠️ ระบบ AI ขัดข้อง หรืออินเทอร์เน็ตล่าช้าเกินไป\n\nคุณต้องการ 'ข้าม' การตรวจสอบและบันทึกสลิปเลยหรือไม่?", "❌ AI ไม่ตอบสนอง", "danger");
-                        if (!confirmed) {
-                             e.target.value = ''; window.currentUploadId = null; return;
-                        }
+                        if (!confirmed) { e.target.value = ''; window.currentUploadId = null; return; }
                     } else if (totalScannedAmount === 0 || isNaN(totalScannedAmount)) {
                         let alertMsg = `ระบบ AI ไม่สามารถอ่านยอดเงินจากสลิปได้ หรือยอดรวมเป็น ฿0\n(ยอดจองของรายการนี้คือ ฿${expectedPrice})\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`;
                         const confirmed = await window.customConfirm(alertMsg, "❌ ตรวจสอบยอดเงิน", "danger");
-                        if (!confirmed) {
-                             e.target.value = ''; window.currentUploadId = null; return;
-                        }
+                        if (!confirmed) { e.target.value = ''; window.currentUploadId = null; return; }
                     } else if (totalScannedAmount < expectedPrice) {
                         let alertMsg = `⚠️ ยอดโอนยังไม่ครบ!\nระบบ AI อ่านยอดเงินรวมจากสลิปทั้งหมดได้: ฿${totalScannedAmount}\n(ยอดจองของรายการนี้คือ ฿${expectedPrice})\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`;
                         const confirmed = await window.customConfirm(alertMsg, "❌ ยอดโอนยังไม่ครบ", "danger");
-                        if (!confirmed) {
-                             e.target.value = ''; window.currentUploadId = null; return;
-                        }
+                        if (!confirmed) { e.target.value = ''; window.currentUploadId = null; return; }
                     } else if (totalScannedAmount > expectedPrice) {
-                        let alertMsg = `⚠️ โอนเงินเกิน!\nระบบ AI อ่านยอดเงินรวมจากสลิปทั้งหมดได้: ฿${totalScannedAmount}\n(ยอดจองของรายการนี้คือ ฿${expectedPrice})\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`;
-                        const confirmed = await window.customConfirm(alertMsg, "⚠️ โอนเงินเกิน", "warning");
-                        if (!confirmed) {
-                             e.target.value = ''; window.currentUploadId = null; return;
+                        if (isMultiple) {
+                            const confirmed = await window.customConfirm(`✅ ชำระแล้ว (ใบเสร็จหลายการจอง)\nระบบ AI อ่านยอดเงินรวมได้ ฿${totalScannedAmount}\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`, "ตรวจสอบยอดเงินสำเร็จ", "success");
+                            if (!confirmed) { e.target.value = ''; window.currentUploadId = null; return; }
+                        } else {
+                            let alertMsg = `⚠️ โอนเงินเกิน!\nระบบ AI อ่านยอดเงินรวมจากสลิปทั้งหมดได้: ฿${totalScannedAmount}\n(ยอดจองของรายการนี้คือ ฿${expectedPrice})\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`;
+                            const confirmed = await window.customConfirm(alertMsg, "⚠️ โอนเงินเกิน", "warning");
+                            if (!confirmed) { e.target.value = ''; window.currentUploadId = null; return; }
                         }
                     } else {
                         const confirmed = await window.customConfirm(`✅ ชำระแล้ว (ยอดเงินถูกต้อง)\nระบบ AI อ่านยอดเงินรวมได้ ฿${totalScannedAmount} ตรงกับยอดชำระพอดี\n\nยืนยันการเพิ่มสลิปนี้หรือไม่?`, "ตรวจสอบยอดเงินสำเร็จ", "success");
-                        if (!confirmed) {
-                             e.target.value = ''; window.currentUploadId = null; return;
-                        }
+                        if (!confirmed) { e.target.value = ''; window.currentUploadId = null; return; }
                     }
 
-                    // บันทึกสลิปทั้งหมด (ของเก่า + ของใหม่)
+                    b.isMultipleBooking = isMultiple;
                     b.slips = existingSlips;
                     b.scannedAmount = totalScannedAmount;
-                    if(b.slip) b.slip = ""; // clear legacy
+                    if(b.slip) b.slip = ""; 
                     
                     await setDoc(doc(collectionRef, String(b.id)), b); 
                     
                     if (document.getElementById('slipModal').classList.contains('modal-active')) {
                         window.currentSlipArray = [...b.slips];
-                        window.currentSlipIndex = window.currentSlipArray.length - 1; // เลื่อนไปแสดงรูปที่เพิ่งอัปโหลดใหม่สุด
+                        window.currentSlipIndex = window.currentSlipArray.length - 1; 
                         window.updateSlipModalView();
                     }
                     window.showAlert(`เพิ่มสลิปเรียบร้อย (รวมทั้งหมด ${existingSlips.length} รูป)`, "success"); 
