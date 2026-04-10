@@ -25,10 +25,19 @@
         /* Flatpickr Customization */
         .flatpickr-calendar { font-family: 'Kanit', sans-serif; border-radius: 1rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border: none; }
         .flatpickr-day.selected { background: #2563eb !important; border-color: #2563eb !important; }
+        
         .flatpickr-day.nextMonthDay:not(.flatpickr-disabled), 
-        .flatpickr-day.prevMonthDay:not(.flatpickr-disabled) { color: #1e293b !important; opacity: 1 !important; }
-        .flatpickr-day.future-restricted-blue.flatpickr-disabled { color: #2563eb !important; background-color: #eff6ff !important; font-weight: 500; cursor: not-allowed; opacity: 0.8 !important; border-color: transparent !important; }
-        .flatpickr-day.flatpickr-disabled:not(.future-restricted-blue) { color: #94a3b8 !important; background-color: #f8fafc !important; cursor: not-allowed; opacity: 0.7 !important; }
+        .flatpickr-day.prevMonthDay:not(.flatpickr-disabled) {
+            color: #1e293b !important; opacity: 1 !important;
+        }
+
+        .flatpickr-day.future-restricted-blue.flatpickr-disabled {
+            color: #2563eb !important; background-color: #eff6ff !important; font-weight: 500; cursor: not-allowed; opacity: 0.8 !important; border-color: transparent !important;
+        }
+
+        .flatpickr-day.flatpickr-disabled:not(.future-restricted-blue) {
+            color: #94a3b8 !important; background-color: #f8fafc !important; cursor: not-allowed; opacity: 0.7 !important;
+        }
 
         .modal-active { display: flex !important; animation: fadeIn 0.2s ease-out; }
         @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -124,6 +133,7 @@
                         🔒 ปลดล็อกผู้ดูแล
                     </button>
                 </div>
+                <!-- Login Button (Visible to all) -->
                 <button id="loginBtn" onclick="window.toggleLogin()" class="px-4 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 transition-all flex items-center gap-2 shadow-lg mt-2 md:mt-0 w-full md:w-auto justify-center">
                     🔐 เข้าสู่ระบบ (สำหรับจอง)
                 </button>
@@ -367,7 +377,7 @@
         </div>
     </div>
 
-    <!-- Prompt Modal -->
+    <!-- Prompt Modal (Custom for iframe compatibility) -->
     <div id="promptModal" class="fixed inset-0 bg-slate-900/80 z-[110] hidden items-center justify-center p-4">
         <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center mx-2">
             <div class="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -548,20 +558,10 @@
             measurementId: "G-LK3TBJ16D0"
         };
 
-        // Safe Storage Wrapper for Iframe Preview Sandbox
         const safeStorage = (() => {
             let memory = {};
-            try {
-                localStorage.setItem('__test__', '1');
-                localStorage.removeItem('__test__');
-                return localStorage;
-            } catch (e) {
-                return {
-                    getItem: (k) => memory[k] || null,
-                    setItem: (k, v) => { memory[k] = String(v); },
-                    removeItem: (k) => { delete memory[k]; }
-                };
-            }
+            try { localStorage.setItem('__t__', '1'); localStorage.removeItem('__t__'); return localStorage; } 
+            catch (e) { return { getItem: (k) => memory[k] || null, setItem: (k, v) => { memory[k] = String(v); }, removeItem: (k) => { delete memory[k]; } }; }
         })();
 
         window.isLoggedIn = safeStorage.getItem('makmai_session') === 'true';
@@ -569,7 +569,7 @@
         window.geminiKey = safeStorage.getItem('gemini_api_key') || '';
         window.currentFilterWeek = '';
         window.allBookingsCache = [];
-        window.customerProfiles = []; // แยกเก็บรายชื่อลูกค้าไม่ให้โดนลบ
+        window.customerProfiles = []; 
         window.highlightedBookingId = null;
         window.isPastBookingMode = false;
         window.slipCache = {};
@@ -586,14 +586,13 @@
         const thaiMonths = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
         const originalDocTitle = document.title;
 
-        // --- OCR AI SCAN FUNCTION (Gemini Only) ---
-        async function scanSlipAmountWithAI(base64String) {
+        // --- OCR AI SCAN FUNCTION ---
+        window.scanSlipAmountWithAI = async function(base64String) {
             const apiKey = window.geminiKey || "";
             const modelName = apiKey ? "gemini-2.5-flash" : "gemini-2.5-flash-preview-09-2025";
             
             try {
                 const base64Data = base64String.includes(',') ? base64String.split(',')[1] : base64String;
-
                 const prompt = `You are an expert OCR system for Thai bank transfer slips.
 Extract the final transfer amount. Look specifically for the number associated with the keyword "บาท" (Baht) or total amount.
 Ignore account numbers, reference numbers, dates, or available balances.
@@ -602,7 +601,6 @@ Example: {"amount": 1500.50}
 If you absolutely cannot find the amount, return {"amount": 0}`;
                 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
-                
                 const controller = new AbortController();
                 const timeoutId = setTimeout(() => controller.abort(), 15000); 
                 
@@ -641,9 +639,9 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 console.warn("Gemini Network/Timeout Error:", err.message);
                 return -1; 
             }
-        }
+        };
 
-        // --- CUSTOM MODALS FOR IFRAME COMPATIBILITY ---
+        // --- GLOBAL FUNCTIONS ---
         window.customPrompt = function(title) {
             return new Promise((resolve) => {
                 const modal = document.getElementById('promptModal');
@@ -653,20 +651,9 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 modal.classList.add('modal-active');
                 input.focus();
 
-                const submitHandler = () => {
-                    modal.classList.remove('modal-active');
-                    cleanup();
-                    resolve(input.value);
-                };
-                const cancelHandler = () => {
-                    modal.classList.remove('modal-active');
-                    cleanup();
-                    resolve(null);
-                };
-                
-                const enterKeyHandler = (e) => {
-                    if (e.key === 'Enter') submitHandler();
-                };
+                const submitHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(input.value); };
+                const cancelHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(null); };
+                const enterKeyHandler = (e) => { if (e.key === 'Enter') submitHandler(); };
 
                 const cleanup = () => {
                     document.getElementById('promptSubmitBtn').removeEventListener('click', submitHandler);
@@ -691,36 +678,24 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                 if (type === "danger") {
                     btn.className = "flex-1 px-4 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-lg";
                     icon.className = "w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4";
-                    icon.setAttribute('class', 'w-8 h-8');
                     icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
-                    document.getElementById('confirmTitleGeneric').classList.add('text-red-600');
+                    document.getElementById('confirmTitleGeneric').className = 'text-xl font-bold text-red-600 mb-2';
                 } else if (type === "success") {
                     btn.className = "flex-1 px-4 py-3 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-lg";
                     icon.className = "w-16 h-16 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center mx-auto mb-4";
-                    icon.setAttribute('class', 'w-8 h-8');
                     icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
-                    document.getElementById('confirmTitleGeneric').classList.remove('text-red-600');
-                    document.getElementById('confirmTitleGeneric').classList.add('text-emerald-600');
+                    document.getElementById('confirmTitleGeneric').className = 'text-xl font-bold text-emerald-600 mb-2';
                 } else {
                     btn.className = "flex-1 px-4 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg";
                     icon.className = "w-16 h-16 bg-amber-50 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4";
-                    icon.setAttribute('class', 'w-8 h-8');
                     icon.innerHTML = '<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>';
-                    document.getElementById('confirmTitleGeneric').classList.remove('text-red-600', 'text-emerald-600');
+                    document.getElementById('confirmTitleGeneric').className = 'text-xl font-bold text-slate-800 mb-2';
                 }
 
                 modal.classList.add('modal-active');
 
-                const submitHandler = () => {
-                    modal.classList.remove('modal-active');
-                    cleanup();
-                    resolve(true);
-                };
-                const cancelHandler = () => {
-                    modal.classList.remove('modal-active');
-                    cleanup();
-                    resolve(false);
-                };
+                const submitHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(true); };
+                const cancelHandler = () => { modal.classList.remove('modal-active'); cleanup(); resolve(false); };
 
                 const cleanup = () => {
                     btn.removeEventListener('click', submitHandler);
@@ -737,20 +712,9 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             const icon = box.querySelector('svg');
             
             box.className = 'text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 w-[90%] md:w-auto max-w-sm fixed top-4 right-4 md:top-6 md:right-6 z-[9999] transition-all';
-            
-            if (type === 'success') {
-                box.classList.add('bg-emerald-600');
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
-                icon.setAttribute('class', 'w-6 h-6 text-white shrink-0');
-            } else if (type === 'danger' || type === 'error') {
-                box.classList.add('bg-red-600');
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
-                icon.setAttribute('class', 'w-6 h-6 text-white shrink-0');
-            } else {
-                box.classList.add('bg-slate-800');
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
-                icon.setAttribute('class', 'w-6 h-6 text-yellow-400 shrink-0');
-            }
+            if (type === 'success') { box.classList.add('bg-emerald-600'); icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>'; } 
+            else if (type === 'danger' || type === 'error') { box.classList.add('bg-red-600'); icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>'; } 
+            else { box.classList.add('bg-slate-800'); icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>'; }
             
             box.querySelector('span').innerText = msg; 
             box.style.display = 'flex'; 
@@ -758,11 +722,10 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
         };
 
         window.closeModal = () => { document.querySelectorAll('.fixed').forEach(m => m.classList.remove('modal-active')); document.title = originalDocTitle; window.currentUploadId = null; };
-        window.closeConfirmModal = () => { document.getElementById('confirmModal').classList.remove('modal-active'); };
         window.closeEditBookingModal = () => { document.getElementById('editBookingModal').classList.remove('modal-active'); };
         window.openBackupModal = () => { document.getElementById('backupModal').classList.add('modal-active'); };
         window.closeMaintenanceModal = () => { document.getElementById('autoMaintenanceModal').classList.remove('modal-active'); };
-        window.closeUploadPrompt = () => { document.getElementById('uploadSlipPromptModal').classList.remove('modal-active'); window.currentUploadId = null; };
+        window.closeUploadPrompt = () => { document.getElementById('uploadSlipPromptModal').classList.remove('modal-active'); }; 
 
         window.houseOwnerDB = {};
         const rawOwnerCSV = `
@@ -1027,7 +990,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
 125/256,คุณเฉลิมชัย  พัวพิพัฒน์
 125/257,คุณเรวดี  รังคะรัตน
 125/258,คุณยอดพงศ์  รามสูต
-125/259,คุณศิริพร  วัฒนกุล
+125/259,คุณศิริพร  วัฒกุล
 125/260,คุณศิริพร วัฒนกุล
 125/261,คุณศิริพร  วัฒกุล
 125/262,คุณเสริมศักดิ์  ลักษณานันท์
@@ -1217,7 +1180,7 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
 125/449,คุณพงศ์ภัทร อะสีติรัตน์
 125/450,คุณณัฐฐณัณ พิมทะโนทัย
 125/451,คุณคุณธรรม  ประสิทธิ์รัฐสินธุ์
-        `;
+`;
 
         rawOwnerCSV.trim().split('\n').forEach(line => {
             const parts = line.includes('\t') ? line.split('\t') : line.split(',');
@@ -1334,7 +1297,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             if (!val) return; const addr = window.normalizeAddress(val);
             document.getElementById('inputAddress').value = addr; window.fillOwnerFields(window.houseOwnerDB[addr] || '');
             
-            // Check customer profiles first
             let match = window.customerProfiles.find(p => window.normalizeAddress(p.address) === addr);
             
             if (!match) {
@@ -1348,7 +1310,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
 
         window.autoFillFromPhone = (val) => {
             if (val && val.length === 10) {
-                // Check customer profiles first
                 let match = window.customerProfiles.find(p => p.phoneNumber === val);
                 
                 if (!match) {
@@ -1560,7 +1521,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     
                     tr.className = `transition-colors relative ${isP ? 'bg-slate-100/60 opacity-80 border-slate-200' : 'bg-white cursor-pointer hover:bg-slate-50 border-emerald-500'} border-l-4 border-r-4 ${idx===0?'border-t-4':''} ${idx===bks.length-1?'border-b-4':'border-b border-slate-100'}`;
                     
-                    // ให้แถวคลิกเพื่อซิงค์เวลา แต่ไม่กระทบปุ่ม
                     tr.onclick = (e) => {
                         const cellIndex = e.target.closest('td') ? e.target.closest('td').cellIndex : -1;
                         if (cellIndex >= 0 && cellIndex <= 4) {
@@ -1626,194 +1586,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     tbody.appendChild(tr);
                 });
             });
-        };
-
-        // --- SLIP MODAL NAVIGATION & UPDATE ---
-        window.updateSlipModalView = () => {
-            const img = document.getElementById('slipPreview');
-            img.style.opacity = 0;
-            setTimeout(() => {
-                img.src = window.currentSlipArray[window.currentSlipIndex];
-                img.style.opacity = 1;
-            }, 150);
-            
-            const counter = document.getElementById('slipCounter');
-            const btnPrev = document.getElementById('btnPrevSlip');
-            const btnNext = document.getElementById('btnNextSlip');
-            
-            if (window.currentSlipArray.length > 1) {
-                counter.innerText = `${window.currentSlipIndex + 1} / ${window.currentSlipArray.length}`;
-                counter.classList.remove('hidden');
-                btnPrev.classList.toggle('hidden', window.currentSlipIndex === 0);
-                btnNext.classList.toggle('hidden', window.currentSlipIndex === window.currentSlipArray.length - 1);
-            } else {
-                counter.classList.add('hidden');
-                btnPrev.classList.add('hidden');
-                btnNext.classList.add('hidden');
-            }
-        };
-
-        window.prevSlip = () => {
-            if (window.currentSlipIndex > 0) {
-                window.currentSlipIndex--;
-                window.updateSlipModalView();
-            }
-        };
-
-        window.nextSlip = () => {
-            if (window.currentSlipIndex < window.currentSlipArray.length - 1) {
-                window.currentSlipIndex++;
-                window.updateSlipModalView();
-            }
-        };
-
-        window.printWeeklySchedule = () => {
-            const today = window.getThailandDate(); let html = `<div class="p-6 bg-white w-full"><div class="text-center mb-4 border-b border-slate-200 pb-3"><h2 class="text-xl font-black text-slate-800">ตารางการจองสนาม (8 วัน)</h2><p class="text-xs text-slate-500">ข้อมูล ณ วันที่ ${window.formatThaiDate(today)} เวลา ${String(window.getThailandHour()).padStart(2,'0')}:${String(window.getThailandTimeParts().minute).padStart(2,'0')} น.</p></div><div class="flex flex-wrap justify-between items-start w-full">`;
-            for (let i=0; i<=7; i++) {
-                const d = new Date(window.parseLocalDate(today)); d.setDate(d.getDate() + i); const dS = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-                const bks = window.allBookingsCache.filter(b => b.date === dS && !b.isCustomerProfile);
-                html += `<div class="w-[49%] mb-4 break-inside-avoid border border-slate-300 rounded-lg overflow-hidden"><h3 class="text-[10px] font-bold bg-slate-100 p-1 text-center border-b border-slate-300">${window.formatThaiDate(dS)}</h3><table class="w-full text-left text-[8px] border-collapse bg-white"><thead><tr class="bg-slate-50 text-slate-500"><th class="border-b border-r p-1 text-center w-8">เวลา</th><th class="border-b border-r p-1 text-center w-1/2">สนาม 1</th><th class="border-b p-1 text-center w-1/2">สนาม 2</th></tr></thead><tbody>`;
-                for(let h=6; h<=20; h++) {
-                    const b1 = bks.find(b => b.court==="สนาม 1" && h>=parseInt(b.time.split(':')[0],10) && h<parseInt(b.time.split(':')[0],10)+Number(b.hours)), b2 = bks.find(b => b.court==="สนาม 2" && h>=parseInt(b.time.split(':')[0],10) && h<parseInt(b.time.split(':')[0],10)+Number(b.hours));
-                    const fS = (b) => !b ? '<div class="text-center text-slate-300">-</div>' : `<div class="flex flex-col pl-1"><span class="font-bold text-slate-800 truncate">${b.customerName}</span><span class="text-[7px] text-slate-500">125/${b.address} <span class="${window.hasSlip(b)?'text-blue-600':'text-orange-600'}">${window.hasSlip(b)?'(จ่าย)':'(ค้าง)'}</span></span></div>`;
-                    html += `<tr class="hover:bg-slate-50"><td class="border-b border-r p-1 text-center font-mono font-bold text-slate-400">${h}:00</td><td class="border-b border-r p-0.5 ${b1?(window.hasSlip(b1)?'bg-blue-50/50':'bg-orange-50/50'):''}">${fS(b1)}</td><td class="border-b p-0.5 ${b2?(window.hasSlip(b2)?'bg-blue-50/50':'bg-orange-50/50'):''}">${fS(b2)}</td></tr>`;
-                }
-                html += `</tbody></table></div>`;
-            }
-            document.getElementById('receiptContent').innerHTML = html + `</div></div>`;
-            document.title = `ตารางจองสนาม_${today}`;
-            document.querySelector('#receiptModal > div').className = 'bg-white max-w-5xl w-full mx-auto relative flex flex-col items-center p-0 md:p-6 shadow-2xl';
-            document.getElementById('receiptModal').classList.add('modal-active');
-        };
-
-        window.printReceipt = async (id) => {
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); if (!b) return window.showAlert("ไม่พบข้อมูล");
-            const hrs = Number(b.hours||0), startH = parseInt((b.time||"00").split(':')[0],10); let std = 0, pk = 0;
-            for(let i=0; i<hrs; i++) { if (startH+i >= 18) pk++; else std++; } const total = std*100 + pk*150;
-            const rHtml = (type) => `<div class="border border-slate-800 p-4 relative bg-white" style="page-break-inside: avoid;"><div class="flex justify-between items-start mb-2"><div class="flex items-start gap-2"><img src="แมกไม้พื้นหลังดำ.jpg" class="w-10 h-10 object-contain" onerror="this.style.display='none'"><div><h2 class="text-base font-black text-slate-800 leading-tight">MAKMAI TENNIS CLUB</h2><p class="text-[9px] font-bold text-slate-500">ใบเสร็จรับเงิน / Receipt</p></div></div><div class="text-right"><div class="text-[9px] font-bold text-slate-500 mb-0.5">${type==='copy'?'สำเนา':'ต้นฉบับ'}</div><div class="font-mono text-xs font-bold text-slate-700">#${window.generateRef(b)}</div><div class="text-[9px] font-medium">วันที่: ${window.formatThaiDate(window.getThailandDate())}</div></div></div><div class="border-t border-slate-800 py-1.5 my-1"><div class="mb-1.5"><h3 class="text-[9px] font-bold text-slate-800 border-b border-slate-300 pb-0.5 mb-1">ผู้มาใช้บริการ / Customer</h3><div class="grid grid-cols-2 gap-1 text-[11px]"><div><span class="text-slate-500">ผู้จอง:</span> <span class="font-bold">${b.customerName}</span></div><div><span class="text-slate-500">บ้านเลขที่:</span> <span class="font-bold">125/${b.address}</span></div><div><span class="text-slate-500">เจ้าของแปลง:</span> <span class="font-bold">${b.ownerName||'-'}</span></div></div></div><div><h3 class="text-[9px] font-bold text-slate-800 border-b border-slate-300 pb-0.5 mb-1">รายละเอียด / Booking</h3><div class="grid grid-cols-3 gap-1 text-[11px]"><div><span class="text-slate-500">สนาม:</span> <span class="font-bold">${b.court}</span></div><div><span class="text-slate-500">เริ่ม:</span> <span class="font-bold">${b.time} น.</span></div><div><span class="text-slate-500">เวลา:</span> <span class="font-bold">${b.hours} ชม.</span></div></div></div></div><div class="space-y-0.5 border-t border-slate-800 pt-1.5">${std>0?`<div class="flex justify-between text-[10px]"><span class="text-slate-600">ค่าสนาม 06:00-18:00 (${std} ชม.)</span><span class="font-mono font-bold">฿${std*100}</span></div>`:''}${pk>0?`<div class="flex justify-between text-[10px]"><span class="text-slate-600">ค่าสนาม 18:00-21:00 (${pk} ชม.)</span><span class="font-mono font-bold">฿${pk*150}</span></div>`:''}<div class="flex justify-between mt-1 pt-1 border-t border-slate-300"><span class="text-xs font-black text-slate-800">ยอดรวม / Total</span><span class="text-lg font-black text-slate-900 font-mono">฿${total}</span></div></div><div class="flex justify-end pt-8 mt-2"><div class="text-center w-28"><div class="border-b border-slate-400 mb-1 h-6"></div><span class="text-[8px] font-bold text-slate-500">ผู้รับเงิน / Recipient</span></div></div></div>`;
-            document.getElementById('receiptContent').innerHTML = `<div class="flex flex-col gap-0">${rHtml('copy')}<div class="w-full py-4 relative flex items-center justify-center print:py-6"><div class="absolute w-full border-b-2 border-dashed border-slate-400 top-1/2"></div><span class="relative bg-white px-2 text-[8px] text-slate-500 font-mono z-10">✂ ตัดตามรอยประ</span></div>${rHtml('original')}</div>`;
-            document.title = `${b.ownerName?b.ownerName.split(' ')[0]:b.customerName}_${window.generateRef(b).replace(/\//g,'-')}`;
-            document.querySelector('#receiptModal > div').className = 'bg-white max-w-xl w-full relative flex flex-col items-center p-0 md:p-4 shadow-2xl';
-            document.getElementById('receiptModal').classList.add('modal-active');
-        };
-
-        window.viewSlipFromId = (id) => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
-            window.currentSlipArray = window.getSlips(b);
-            if(window.currentSlipArray.length > 0) { 
-                window.currentViewingSlipId = id; 
-                window.currentSlipIndex = 0;
-                window.updateSlipModalView();
-                
-                const isP = window.isBookingPast(b); 
-                const btnC = document.getElementById('btnChangeSlipModal');
-                const btnR = document.getElementById('btnRemoveSlipModal'); 
-                const chkM = document.getElementById('modalIsMultipleSlip');
-                
-                if (chkM) {
-                    chkM.checked = !!b.isMultipleBooking;
-                    chkM.disabled = isP && !window.adminMode;
-                }
-                
-                if (isP && !window.adminMode) { 
-                    btnC.style.display = 'none'; 
-                    btnR.style.display = 'none'; 
-                } else { 
-                    btnC.style.display = 'flex'; 
-                    btnR.style.display = 'flex'; 
-                } 
-                document.getElementById('slipModal').classList.add('modal-active'); 
-            } else {
-                window.showAlert("ไม่พบรูปสลิป", "danger"); 
-            }
-        };
-
-        window.toggleMultipleBookingStatus = async (isChecked) => {
-            if (!window.currentViewingSlipId) return;
-            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId));
-            if (!b) return;
-
-            const isP = window.isBookingPast(b);
-            if (isP && !window.adminMode) {
-                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
-                return window.showAlert("❌ ไม่สามารถแก้ไขสถานะรายการในอดีตได้", "danger");
-            }
-
-            try {
-                b.isMultipleBooking = isChecked;
-                await setDoc(doc(collectionRef, String(b.id)), b);
-                window.showAlert("อัปเดตสถานะใบเสร็จเรียบร้อย", "success");
-                window.renderAll();
-            } catch(e) {
-                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
-                window.showAlert("อัปเดตสถานะไม่สำเร็จ: " + e.message, "danger");
-            }
-        };
-
-        window.addMoreSlipInModal = async () => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ เพิ่มสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
-            window.currentUploadId = window.currentViewingSlipId; 
-            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
-            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
-        };
-
-        window.triggerUploadSlip = (id) => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ อัปโหลดสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
-            window.currentUploadId = id; 
-            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
-            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
-        };
-
-        window.removeCurrentSlipInModal = () => { 
-            if (!window.currentViewingSlipId) return; 
-            window.removeSlip(window.currentViewingSlipId, true); 
-        };
-
-        window.removeSlip = async (id, fromM = false) => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
-            
-            const isLast = window.currentSlipArray.length <= 1;
-            const msg = isLast ? "⚠️ ลบรูปสลิปใบสุดท้าย และเปลี่ยนสถานะเป็น 'ค้างชำระ' ใช่หรือไม่?" : "ยืนยันการลบรูปสลิปใบนี้?\nระบบจะทำการสแกนยอดเงินรวมใหม่";
-            const confirmed = await window.customConfirm(msg, "ยืนยันการลบสลิป", "danger");
-            if (!confirmed) return; 
-            
-            try { 
-                window.currentSlipArray.splice(window.currentSlipIndex, 1);
-                
-                b.slips = [...window.currentSlipArray];
-                if (b.slip) b.slip = ""; 
-
-                if (b.slips.length === 0) {
-                    b.scannedAmount = 0;
-                } else {
-                    window.showAlert("กำลังอัปเดตยอดเงินรวมใหม่...", "warning");
-                    let newTotal = 0;
-                    for (let slipData of b.slips) {
-                         const amt = Number(await scanSlipAmountWithAI(slipData));
-                         if (!isNaN(amt) && amt !== -1) newTotal += amt;
-                    }
-                    b.scannedAmount = newTotal;
-                }
-                
-                await setDoc(doc(collectionRef, String(b.id)), b); 
-                
-                if (fromM) { 
-                    if (window.currentSlipArray.length === 0) {
-                        window.closeModal(); 
-                        document.getElementById('slipPreview').src = ''; 
-                    } else {
-                        if (window.currentSlipIndex >= window.currentSlipArray.length) {
-                            window.currentSlipIndex = window.currentSlipArray.length - 1;
-                        }
-                        window.updateSlipModalView();
-                    }
-                } 
-                window.showAlert("ลบสลิปเรียบร้อย", "success"); 
-                window.renderAll();
-            } catch (e) { window.showAlert("ลบสลิปไม่สำเร็จ", "danger"); } 
         };
 
         window.navigateWeek = function(dir) {
@@ -2182,35 +1954,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             r.readAsText(file);
         };
 
-        window.deleteBooking = async (id) => {
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id));
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบรายการในอดีตไม่ได้ (ต้องเปิดโหมดแอดมิน)", "danger");
-            const confirmed = await window.customConfirm("คุณแน่ใจว่าต้องการลบรายการจองนี้? ข้อมูลจะไม่สามารถกู้คืนได้", "ยืนยันการลบ?", "danger");
-            if (!confirmed) return;
-            try {
-                await deleteDoc(doc(collectionRef, String(id)));
-                window.showAlert("🗑️ ลบข้อมูลเรียบร้อย", "success");
-            } catch (err) {
-                console.error(err);
-                window.showAlert("❌ ลบข้อมูลไม่สำเร็จ", "danger");
-            }
-        };
-
-        const compressImage = (file) => {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader(); reader.onerror = () => reject(new Error("อ่านไฟล์ไม่ได้")); reader.readAsDataURL(file);
-                reader.onload = (e) => {
-                    const img = new Image(); img.onerror = () => reject(new Error("ไฟล์ไม่ใช่รูปภาพ")); img.src = e.target.result;
-                    img.onload = () => {
-                        const canvas = document.createElement('canvas'); const MAX = 1000; let w = img.width, h = img.height;
-                        if (w > h) { if (w > MAX) { h *= MAX / w; w = MAX; } } else { if (h > MAX) { w *= MAX / h; h = MAX; } }
-                        canvas.width = w; canvas.height = h; canvas.getContext('2d').drawImage(img, 0, 0, w, h); 
-                        resolve(canvas.toDataURL('image/jpeg', 0.85)); 
-                    };
-                };
-            });
-        };
-
         // --- SUBMIT BOOKING (AND SAVE PROFILE) ---
         document.getElementById('bookingForm').onsubmit = async (e) => {
             e.preventDefault(); const btn = document.getElementById('submitBtn'); const fd = new FormData(e.target);
@@ -2419,6 +2162,42 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
             document.getElementById('editTime').innerHTML = timeHtml; document.getElementById('editTime').value = (b.time||"").padStart(5, '0');
             window.updateEditHourOptions(); document.getElementById('editHours').value = b.hours;
             document.getElementById('editBookingModal').classList.add('modal-active');
+        };
+
+        document.getElementById('editBookingForm').onsubmit = async (e) => {
+            e.preventDefault(); const btn = document.querySelector('#editBookingForm button[type="submit"]'); const fd = new FormData(e.target);
+            try {
+                btn.disabled = true; btn.innerHTML = 'กำลังบันทึก...';
+                const idValue = document.getElementById('editBookingId').value, date = fd.get('date'), court = fd.get('court'), time = fd.get('time'), hours = parseInt(fd.get('hours'), 10), startH = parseInt(time.split(':')[0], 10), weekStr = window.getWeekString(date), todayThaiStr = window.getThailandDate(), nowH = window.getThailandHour();
+                
+                if (!window.adminMode && (date < todayThaiStr || (date === todayThaiStr && startH < nowH))) return window.showAlert("❌ เปลี่ยนเป็นเวลาย้อนหลังไม่ได้", "danger");
+                const existing = window.allBookingsCache.find(x => String(x.id) === idValue); if (!existing) return;
+                const cleanAddress = window.normalizeAddress(existing.address);
+
+                if (date > todayThaiStr && !window.adminMode) {
+                    if (window.allBookingsCache.filter(b => String(b.id) !== idValue && window.normalizeAddress(b.address) === cleanAddress && b.date > todayThaiStr).length >= 3) return window.showAlert(`❌ บ้านเลขที่ 125/${cleanAddress} จองล่วงหน้าเต็มโควต้าแล้ว`, "danger");
+                }
+
+                const requested = Array.from({length: hours}, (_, i) => startH + i);
+                if (window.allBookingsCache.filter(b => String(b.id) !== idValue && b.date === date && b.court === court).some(b => requested.some(s => s >= parseInt((b.time || "00").split(':')[0], 10) && s < parseInt((b.time || "00").split(':')[0], 10) + Number(b.hours || 1)))) return window.showAlert("❌ ช่วงเวลานี้ถูกจองแล้ว!", "danger");
+
+                let implicitLightHours = 0, totalPrice = 0;
+                for(let i = 0; i < hours; i++) { if (startH + i >= 18) { totalPrice += 150; implicitLightHours++; } else totalPrice += 100; }
+                
+                existing.date = date; existing.court = court; existing.time = time; existing.hours = hours; existing.lightHours = implicitLightHours; existing.totalPrice = totalPrice; existing.week = weekStr;
+                
+                // ถ้ายอดรวมเปลี่ยน ต้องคำนวณสถานะใหม่
+                if (existing.scannedAmount !== undefined && window.hasSlip(existing)) {
+                    if (existing.scannedAmount < totalPrice) {
+                        // เปลี่ยนสถานะเป็นยอดไม่ครบ
+                    }
+                }
+                
+                await setDoc(doc(collectionRef, String(existing.id)), existing);
+                window.closeEditBookingModal(); 
+                window.syncScheduleToBooking(existing, false); 
+                window.showAlert("แก้ไขวัน-เวลาสำเร็จออนไลน์", "success");
+            } catch (err) { console.error(err); window.showAlert("เกิดข้อผิดพลาด: " + err.message, "danger"); } finally { btn.disabled = false; btn.innerHTML = 'บันทึกการแก้ไข'; }
         };
 
         // --- FIREBASE LOGIC (UPDATED WITH PROFILES) ---
