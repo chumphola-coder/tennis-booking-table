@@ -218,6 +218,7 @@
                                 </label>
                             </div>
                             
+                            <!-- เพิ่ม Checkbox ใบเสร็จหลายการจอง ตรงนี้ -->
                             <div class="flex items-start gap-2 mt-2 px-1">
                                 <input type="checkbox" id="isMultipleSlipForm" name="isMultipleBooking" class="w-4 h-4 mt-0.5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 cursor-pointer">
                                 <label for="isMultipleSlipForm" class="text-[10px] md:text-xs font-bold text-slate-500 cursor-pointer leading-tight">
@@ -309,7 +310,7 @@
         </div>
     </div>
 
-    <!-- Modals (Exactly 1 Instance of Each) -->
+    <!-- Modals -->
     
     <!-- Upload Slip Prompt Modal -->
     <div id="uploadSlipPromptModal" class="fixed inset-0 bg-slate-900/80 z-[110] hidden items-center justify-center p-4">
@@ -778,162 +779,6 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
         window.openBackupModal = () => { document.getElementById('backupModal').classList.add('modal-active'); };
         window.closeMaintenanceModal = () => { document.getElementById('autoMaintenanceModal').classList.remove('modal-active'); };
         window.closeUploadPrompt = () => { document.getElementById('uploadSlipPromptModal').classList.remove('modal-active'); window.currentUploadId = null; };
-
-        // --- SLIP MODAL NAVIGATION & UPDATE (RESTORED) ---
-        window.updateSlipModalView = () => {
-            const img = document.getElementById('slipPreview');
-            img.style.opacity = 0;
-            setTimeout(() => {
-                img.src = window.currentSlipArray[window.currentSlipIndex];
-                img.style.opacity = 1;
-            }, 150);
-            
-            const counter = document.getElementById('slipCounter');
-            const btnPrev = document.getElementById('btnPrevSlip');
-            const btnNext = document.getElementById('btnNextSlip');
-            
-            if (window.currentSlipArray.length > 1) {
-                counter.innerText = `${window.currentSlipIndex + 1} / ${window.currentSlipArray.length}`;
-                counter.classList.remove('hidden');
-                btnPrev.classList.toggle('hidden', window.currentSlipIndex === 0);
-                btnNext.classList.toggle('hidden', window.currentSlipIndex === window.currentSlipArray.length - 1);
-            } else {
-                counter.classList.add('hidden');
-                btnPrev.classList.add('hidden');
-                btnNext.classList.add('hidden');
-            }
-        };
-
-        window.prevSlip = () => {
-            if (window.currentSlipIndex > 0) {
-                window.currentSlipIndex--;
-                window.updateSlipModalView();
-            }
-        };
-
-        window.nextSlip = () => {
-            if (window.currentSlipIndex < window.currentSlipArray.length - 1) {
-                window.currentSlipIndex++;
-                window.updateSlipModalView();
-            }
-        };
-
-        window.viewSlipFromId = (id) => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
-            window.currentSlipArray = window.getSlips(b);
-            if(window.currentSlipArray.length > 0) { 
-                window.currentViewingSlipId = id; 
-                window.currentSlipIndex = 0;
-                window.updateSlipModalView();
-                
-                const isP = window.isBookingPast(b); 
-                const btnC = document.getElementById('btnChangeSlipModal');
-                const btnR = document.getElementById('btnRemoveSlipModal'); 
-                const chkM = document.getElementById('modalIsMultipleSlip');
-                
-                if (chkM) {
-                    chkM.checked = !!b.isMultipleBooking;
-                    chkM.disabled = isP && !window.adminMode;
-                }
-                
-                if (isP && !window.adminMode) { 
-                    btnC.style.display = 'none'; 
-                    btnR.style.display = 'none'; 
-                } else { 
-                    btnC.style.display = 'flex'; 
-                    btnR.style.display = 'flex'; 
-                } 
-                document.getElementById('slipModal').classList.add('modal-active'); 
-            } else {
-                window.showAlert("ไม่พบรูปสลิป", "danger"); 
-            }
-        };
-
-        window.toggleMultipleBookingStatus = async (isChecked) => {
-            if (!window.currentViewingSlipId) return;
-            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId));
-            if (!b) return;
-
-            const isP = window.isBookingPast(b);
-            if (isP && !window.adminMode) {
-                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
-                return window.showAlert("❌ ไม่สามารถแก้ไขสถานะรายการในอดีตได้", "danger");
-            }
-
-            try {
-                b.isMultipleBooking = isChecked;
-                await setDoc(doc(collectionRef, String(b.id)), b);
-                window.showAlert("อัปเดตสถานะใบเสร็จเรียบร้อย", "success");
-            } catch(e) {
-                document.getElementById('modalIsMultipleSlip').checked = !isChecked; 
-                window.showAlert("อัปเดตสถานะไม่สำเร็จ: " + e.message, "danger");
-            }
-        };
-
-        window.addMoreSlipInModal = async () => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(window.currentViewingSlipId)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ เพิ่มสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
-            window.currentUploadId = window.currentViewingSlipId; 
-            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
-            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
-        };
-
-        window.triggerUploadSlip = (id) => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ อัปโหลดสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
-            window.currentUploadId = id; 
-            document.getElementById('updateIsMultipleSlip').checked = !!b?.isMultipleBooking;
-            document.getElementById('uploadSlipPromptModal').classList.add('modal-active'); 
-        };
-
-        window.removeCurrentSlipInModal = () => { 
-            if (!window.currentViewingSlipId) return; 
-            window.removeSlip(window.currentViewingSlipId, true); 
-        };
-
-        window.removeSlip = async (id, fromM = false) => { 
-            const b = window.allBookingsCache.find(x => String(x.id) === String(id)); 
-            if (b && window.isBookingPast(b) && !window.adminMode) return window.showAlert("❌ ลบสลิปไม่ได้ (เลยเวลาแล้ว)", "danger"); 
-            
-            const isLast = window.currentSlipArray.length <= 1;
-            const msg = isLast ? "⚠️ ลบรูปสลิปใบสุดท้าย และเปลี่ยนสถานะเป็น 'ค้างชำระ' ใช่หรือไม่?" : "ยืนยันการลบรูปสลิปใบนี้?\nระบบจะทำการสแกนยอดเงินรวมใหม่";
-            const confirmed = await window.customConfirm(msg, "ยืนยันการลบสลิป", "danger");
-            if (!confirmed) return; 
-            
-            try { 
-                window.currentSlipArray.splice(window.currentSlipIndex, 1);
-                
-                b.slips = [...window.currentSlipArray];
-                if (b.slip) b.slip = ""; 
-
-                if (b.slips.length === 0) {
-                    b.scannedAmount = 0;
-                } else {
-                    window.showAlert("กำลังอัปเดตยอดเงินรวมใหม่...", "warning");
-                    let newTotal = 0;
-                    for (let slipData of b.slips) {
-                         const amt = Number(await scanSlipAmountWithAI(slipData));
-                         if (!isNaN(amt) && amt !== -1) newTotal += amt;
-                    }
-                    b.scannedAmount = newTotal;
-                }
-                
-                await setDoc(doc(collectionRef, String(b.id)), b); 
-                
-                if (fromM) { 
-                    if (window.currentSlipArray.length === 0) {
-                        window.closeModal(); 
-                        document.getElementById('slipPreview').src = ''; 
-                    } else {
-                        if (window.currentSlipIndex >= window.currentSlipArray.length) {
-                            window.currentSlipIndex = window.currentSlipArray.length - 1;
-                        }
-                        window.updateSlipModalView();
-                    }
-                } 
-                window.showAlert("ลบสลิปเรียบร้อย", "success"); 
-            } catch (e) { window.showAlert("ลบสลิปไม่สำเร็จ", "danger"); } 
-        };
 
         window.houseOwnerDB = {};
         const rawOwnerCSV = `
@@ -1731,45 +1576,13 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     
                     tr.className = `transition-colors relative ${isP ? 'bg-slate-100/60 opacity-80 border-slate-200' : 'bg-white cursor-pointer hover:bg-slate-50 border-emerald-500'} border-l-4 border-r-4 ${idx===0?'border-t-4':''} ${idx===bks.length-1?'border-b-4':'border-b border-slate-100'}`;
                     
-                    // --- CORE EVENT LISTENER DELEGATION (This fixes the button issues!) ---
+                    // ให้แถวคลิกเพื่อซิงค์เวลา แต่ไม่กระทบปุ่ม
                     tr.onclick = (e) => {
-                        // 1. เช็คว่าคลิกปุ่มแก้ไขหรือไม่
-                        if (e.target.closest('.edit-trigger') && window.isLoggedIn) { 
-                            window.openEditBookingModal(b.id); 
-                            return; 
-                        }
-
-                        // 2. ถ้าเป็น Guest
-                        if (!window.isLoggedIn) {
-                            const td = e.target.closest('td');
-                            const cellIndex = td ? td.cellIndex : -1;
-                            if (cellIndex >= 0 && cellIndex <= 4) window.syncScheduleToBooking(b);
-                            return;
-                        }
-
-                        // 3. ตรวจสอบการกดปุ่มต่างๆ (Action buttons)
-                        const btn = e.target.closest('button');
-                        if (btn) {
-                            if (btn.classList.contains('btn-print') && !btn.disabled) {
-                                window.printReceipt(b.id);
-                            } else if (btn.classList.contains('btn-view-slip')) {
-                                window.viewSlipFromId(b.id);
-                            } else if (btn.classList.contains('btn-upload-slip') && !btn.disabled) {
-                                window.triggerUploadSlip(b.id);
-                            } else if (btn.classList.contains('btn-delete') && !btn.disabled) {
-                                window.deleteBooking(b.id);
-                            }
-                            return; // กดปุ่มแล้วไม่ต้องทำเงื่อนไขอื่นๆ ต่อ
-                        }
-                        
-                        // 4. ถ้าคลิกพื้นที่ว่างในตาราง (ที่ไม่ใช่ปุ่ม) ให้ซิงค์เวลา
-                        const td = e.target.closest('td');
-                        const cellIndex = td ? td.cellIndex : -1;
+                        const cellIndex = e.target.closest('td') ? e.target.closest('td').cellIndex : -1;
                         if (cellIndex >= 0 && cellIndex <= 4) {
                             window.syncScheduleToBooking(b, true);
                         }
                     };
-                    // ----------------------------------------------------------------------
                     
                     let statusText = '', badgeBg = '', badgeText = '';
                     if (!paid) {
@@ -1806,19 +1619,19 @@ If you absolutely cannot find the amount, return {"amount": 0}`;
                     
                     let edH = (!window.isLoggedIn || lockedEdit) ? 
                         `<td class="p-1 md:px-4 md:py-3 border-none cursor-pointer" title="${!window.isLoggedIn ? '' : 'ไม่สามารถแก้ไขได้ (รายการที่จ่ายแล้วต้องแก้ล่วงหน้า 24 ชม. หรือเลยเวลาเล่นแล้ว)'}"><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-500">${dateDisplay} ${window.isLoggedIn ? '<span class="grayscale opacity-50 cursor-not-allowed">✏️</span>' : ''}</div><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-500 mt-0.5">${b.time} (${b.hours} ชม.) - ${b.court}</div></td>` : 
-                        `<td class="p-1 md:px-4 md:py-3 border-none group" title="${window.adminMode ? 'โหมดผู้ดูแลเปิดใช้งานอยู่' : 'คลิกเพื่อแก้ไขวันและเวลา'}"><div class="font-bold text-[10px] sm:text-sm md:text-base ${window.adminMode?'text-red-600':'text-blue-600'} edit-trigger inline-block cursor-pointer hover:underline">${dateDisplay} ✏️</div><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-900 cursor-pointer mt-0.5 edit-trigger">${b.time} (${b.hours} ชม.) - ${b.court}</div></td>`;
+                        `<td class="p-1 md:px-4 md:py-3 border-none group" title="${window.adminMode ? 'โหมดผู้ดูแลเปิดใช้งานอยู่' : 'คลิกเพื่อแก้ไขวันและเวลา'}"><div class="font-bold text-[10px] sm:text-sm md:text-base ${window.adminMode?'text-red-600':'text-blue-600'} inline-block cursor-pointer hover:underline" onclick="event.stopPropagation(); window.openEditBookingModal('${b.id}')">${dateDisplay} ✏️</div><div class="font-bold text-[10px] sm:text-sm md:text-base text-slate-900 cursor-pointer mt-0.5" onclick="event.stopPropagation(); window.openEditBookingModal('${b.id}')">${b.time} (${b.hours} ชม.) - ${b.court}</div></td>`;
                     
                     const slipCountTxt = window.getSlips(b).length > 1 ? `<span class="absolute -top-1 -right-1 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full">${window.getSlips(b).length}</span>` : '';
                     
-                    // HTML ปุ่ม ถูกสร้างโดยใช้ class เท่านั้น ไม่มี inline onclick ในนี้แล้ว เพื่อป้องกัน Bug
+                    // ปรับโครงสร้างปุ่มให้มี onclick แทรกเข้าไปโดยตรง (ง่ายที่สุดและเสถียรที่สุด)
                     let actH = `<td class="p-1 md:px-4 md:py-3 border-none ${!window.isLoggedIn?'hidden':''}"><div class="flex justify-center gap-1">` + 
                         (window.isLoggedIn ? 
-                        `<button type="button" class="btn-print p-1 md:p-2 rounded-lg transition-colors ${paid ? 'text-blue-600 hover:bg-blue-50' : 'text-slate-300'}" ${!paid ? 'disabled' : ''} title="พิมพ์ใบเสร็จ"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg></button>` + 
+                        `<button type="button" onclick="event.stopPropagation(); window.printReceipt('${b.id}')" class="p-1 md:p-2 rounded-lg transition-colors ${paid ? 'text-blue-600 hover:bg-blue-50' : 'text-slate-300'}" ${!paid ? 'disabled' : ''} title="พิมพ์ใบเสร็จ"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg></button>` + 
                         (paid ? 
-                        `<button type="button" class="btn-view-slip relative p-1 md:p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="ดูรูปสลิป"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${slipCountTxt}</button>` :
-                        `<button type="button" class="btn-upload-slip p-1 md:p-2 text-slate-400 hover:text-blue-600 rounded-lg" ${isP && !window.adminMode?'disabled':''} title="อัพโหลดสลิป"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg></button>`
+                        `<button type="button" onclick="event.stopPropagation(); window.viewSlipFromId('${b.id}')" class="relative p-1 md:p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="ดูรูปสลิป"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>${slipCountTxt}</button>` :
+                        `<button type="button" onclick="event.stopPropagation(); window.triggerUploadSlip('${b.id}')" class="p-1 md:p-2 text-slate-400 hover:text-blue-600 rounded-lg" ${isP && !window.adminMode?'disabled':''} title="อัพโหลดสลิป"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg></button>`
                         ) + 
-                        `<button type="button" class="btn-delete p-1 md:p-2 rounded-lg transition-colors ${isP && !window.adminMode ? 'text-slate-300 cursor-not-allowed' : 'text-red-500 hover:bg-red-50'}" ${isP && !window.adminMode?'disabled':''} title="ลบรายการจอง"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>` 
+                        `<button type="button" onclick="event.stopPropagation(); window.deleteBooking('${b.id}')" class="p-1 md:p-2 rounded-lg transition-colors ${isP && !window.adminMode ? 'text-slate-300 cursor-not-allowed' : 'text-red-500 hover:bg-red-50'}" ${isP && !window.adminMode?'disabled':''} title="ลบรายการจอง"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>` 
                         : "") + `</div></td>`;
                     
                     tr.innerHTML = `<td class="p-1 md:px-4 md:py-3 text-center font-bold text-[10px] sm:text-sm md:text-base ${isP?'text-slate-500':'text-slate-900'} border-none">${seq++}</td>` +
